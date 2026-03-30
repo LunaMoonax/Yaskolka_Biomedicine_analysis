@@ -58,12 +58,15 @@ ggplot(df, aes(x = mean_beta, color = region_grouped)) +
 # Apskaičiuojame koreliacijas
 cor_matrix <- cor(data, use = "pairwise.complete.obs")
 
+# Paimame visus stulpelius
 sample_ann <- colanns(data)
 
-# Paimam tik apatinį trikampį (be diagonalės)
+# Paimame tik apatinį trikampį (be diagonalės)
 lower <- which(lower.tri(cor_matrix), arr.ind = TRUE)
 pair_cor <- cor_matrix[lower]
 
+# Sukuriame data.frame, kur sužymime, kurie mėginiai yra tarp, o kurie grupės viduje.
+# Bus naudojama grafike.
 df <- data.frame(
   cor = pair_cor,
   sex_same = ifelse(sample_ann$sex[lower[,1]] == sample_ann$sex[lower[,2]], "Grupės viduje", "Tarp grupių"),
@@ -72,6 +75,7 @@ df <- data.frame(
   stimulus_same = ifelse(sample_ann$stimulus[lower[,1]] == sample_ann$stimulus[lower[,2]], "Grupės viduje", "Tarp grupių")
 )
 
+# Sukuriame visų analizuojamų grupių grafikai
 p1 <- ggplot(df, aes(x = cor, color = sex_same)) + geom_density(linewidth = 1) +
   labs(title = "Lytis", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
 
