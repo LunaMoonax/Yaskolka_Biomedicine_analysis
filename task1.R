@@ -1,5 +1,6 @@
 # Pirma užduotis
 setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -45,9 +46,9 @@ ggplot(df, aes(x = mean_beta, color = region_grouped)) +
     color = "Regionas",
     title = "Metilinimo (beta) reikšmių pasiskirstymas pagal CpG regioną"
   ) +
-  theme_minimal
+  theme_minimal()
 # Grafike matoma, kad salų regionai yra mažiausiai metilinti, ir didžioji jų dalis yra nemetilinta.
-# Salų krantia yra pusiau nemetilinti ir metilinti.
+# Salų krantai yra pusiau nemetilinti ir metilinti.
 # Salų šleifai yra daugiau metilinti nei krantai ar pačios salos.
 # Atviros jūros regionai yra panašiai metilinti kaip šleifai - didžiausia dalis yra metilinta.
 # Grafikas patvirtina, kad CpG salos yra nemetilintos, daugiau yra krantai, o daugiausiai
@@ -92,6 +93,77 @@ p1 / p2 / p3 / p4
 
 # Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis nei tarp skirtingų grupių.
 # Tai yra rezultatas, kurio ir tikėjomės, vadinasi kokybės kontrolę atitinka.
-# Papildomai patikrinta Dietos ir Aktyvumo grupės. Kadangi šios grupės nebuvo tapr tų, kurios būtų žinomos,
+# Papildomai patikrinta Dietos ir Aktyvumo grupės. Kadangi šios grupės nebuvo tarp tų, kurios būtų žinomos,
 # kad DNR modifikacija skiriasi, matome kad tiek grupės viduje, tiek tarp grupių yra vienodas panašumas.
+
+# Išskirčių paieška
+
+# Išskirčių paieškai bus naudojamas Inter-Array Correlation metodas
+# Pirmas žingsnis: koreliacijų matrica
+# Koreliacijų matrica jau apskaičiuota: cor_matrix
+
+# Kiekvienam mėginiui apskaičiuojame vidutinę koreliaciją su kitais mėginiais.
+# Norint teisingai apskaičiuoti vidutinę koreliaciją su kitais mėginiais,
+# koreliacijų matricoje turime ignoruoti mėginių koreliacijas su savimi, t.y. matricos diagonales reikšmes 1.
+# Matricos diagonalę pakeičiame nuliais, o skaičiuojant vidurkį iš eilučių kiekio atimame vieną.
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+# Trečias žingsnis: atrinkti mėginius, kurių vidutinė koreliacija daugiau negu trimis standartiniais
+# nuokrypiais mažesnė už vidutinę.
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
+# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis.
+outlier_names = c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0")
+data_iteration1 <- data[!rownames(data) %in% outlier_names, !colnames(data) %in% outlier_names]
+
+# Atliekame antrą metodo iteraciją.
+cor_matrix <- cor(data_iteration1, use = "pairwise.complete.obs")
+
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18
+outlier_names = c("144_CENTRAL_T0","175_CENTRAL_T0","18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18")
+data_iteration2 <- data_iteration1[!rownames(data_iteration1) %in% outlier_names, !colnames(data_iteration1) %in% outlier_names]
+
+# Atliekame trečią metodo iteraciją.
+cor_matrix <- cor(data_iteration2, use = "pairwise.complete.obs")
+
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0
+outlier_names = c("126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18","245_CENTRAL_T18","295_CENTRAL_T0")
+
+
+
+
+
+
+
+
+
+
+
 
