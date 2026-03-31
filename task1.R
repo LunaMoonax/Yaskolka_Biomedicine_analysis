@@ -194,3 +194,51 @@ p5
 # Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę,
 # nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija).
 # Kadangi nėra stiprių skirtumų tankio grafikų formose, nėra pagrindo šalinti biologinių išskirčių.
+
+# Klasterizavimas
+
+# Pirmiausia, sudaroma mėginių atstumų matrica, atstumą skaičiuojant kaip 1 - cor.
+# Ši matrica paverčiama į objektą dist, reikalingą klasterizavimo funkcijai hclust.
+library(WGCNA)
+
+cor_dist_matrix <- 1 - stats::cor(data, use = "pairwise.complete.obs")
+cor_dist_matrix <- as.dist(cor_dist_matrix)
+clusters <- stats::hclust(cor_dist_matrix)
+
+# Nubraižomas klasterizavimo grafikas (be mėginių pavadinimų norint išlaikyti tvarkingumą
+# pamatyti vizualias grupes)
+plotDendroAndColors(clusters, NULL, dendroLabels = FALSE)
+
+# Dendrogramoje brėžiant liniją apytiklsiai ties viduriniu aukščiu, matomos 5 ryškiausios grupės.
+groups <- cutree(clusters, k = 5)
+
+# Gaunamas sąrašas su mėginiais ir priskirtuoju grupės numeriu, iš naujo braižomas klasterizavimo grafikas
+# su spalvomis priskirtai grupei.
+colors <- c("purple","red","green","blue","yellow")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+
+# Gauname vieną labai didelę grupę, tris smulkesnes grupes, ir vieną labai mažą grupę, kuri gali rodyti išskirtis.
+# Padaliname medį į daugiau dalių, norint gauti grupes, kurios mažiau besiskiria savo dydžiu.
+# Kartojame procesą.
+
+groups <- cutree(clusters, k = 6)
+colors <- c("purple","red","green","blue","yellow","orange")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+
+# Padalinus medį į šešias dalį, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas
+# atrodo geriau, bet vis dar matoma ta pati smulki, tikriausiai išskirčių grupė kaip prieš tai.
+
+# Dėl įdomumo suskirstykime medį į mažiau grupių negu pradinis variantas - 4.
+groups <- cutree(clusters, k = 4)
+colors <- c("purple","red","green","blue")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+
+# Toks suskirstymas atrodo blogas, susidaro proporcingai per didelė viena grupė.
+# Geriausias variantas: 6 grupės.
+
+groups <- cutree(clusters, k = 6)
+colors <- c("purple","red","green","blue","yellow","orange")
+dendogram_colors <- colors[groups]
