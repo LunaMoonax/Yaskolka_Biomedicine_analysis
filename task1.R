@@ -242,3 +242,54 @@ plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 groups <- cutree(clusters, k = 6)
 colors <- c("purple","red","green","blue","yellow","orange")
 dendogram_colors <- colors[groups]
+
+# Smulkiausia grupė (oranžinės spalvos), yra galimos išskirtys.
+# Sudarome data frame, grupių ir mėginių peržiūrai.
+group_df <- data.frame(groups, dendogram_colors)
+outlier_group <- group_df[group_df$dendogram_colors == "orange",]
+outlier_samples <- rownames(outlier_group)
+
+# Tai mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18
+# Trys iš jų sutampa su praietu išskirčių sąrašu: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0.
+
+# Pakartojame klasterizavimo procesą, šį kartą be išskirčių.
+data_without_outliers_new <- data[,!colnames(data) %in% outlier_samples]
+cor_dist_matrix <- 1 - stats::cor(data_without_outliers_new, use = "pairwise.complete.obs")
+cor_dist_matrix <- as.dist(cor_dist_matrix)
+clusters <- stats::hclust(cor_dist_matrix)
+
+groups <- cutree(clusters, k = 5)
+colors <- c("purple","red","green","blue","yellow")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+
+# Pagal spalvas gauname iš esmės tas pačias grupes, tik sukeistas vietomis ir su pasikeitusia dendrogramos struktūra.
+group_df_new <- data.frame(groups, dendogram_colors)
+
+# Palyginame suskirstymą grupėmis pirmu ir antru atveju (be išskirčių).
+library(arsenal)
+summary(comparedf(group_df, group_df_new))
+
+# Gauname, kad iš viso 86 mėginių suskirtymas sutampa, o 148 mėginių nesutampa.
+# Kadangi sunku pasakyti, ar yra biologinis pagrindas pašalinti išskirčių grupę, pasiliekama prie šešių grupių dendrogramos
+# iš originalaus duomenų rinkinio.
+
+group_one <- group_df[group_df$group == 1,]
+group_one_samples <- rownames(group_one)
+
+group_two <- group_df[group_df$group == 2,]
+group_two_samples <- rownames(group_two)
+
+group_three <- group_df[group_df$group == 3,]
+group_three_samples <- rownames(group_three)
+
+group_four <- group_df[group_df$group == 4,]
+group_four_samples <- rownames(group_four)
+
+group_five <- group_df[group_df$group == 5,]
+group_five_samples <- rownames(group_five)
+
+group_six <- group_df[group_df$group == 6,]
+group_six_samples <- rownames(group_six)
+
+group_one_df <- stack(data[,colnames(data) %in% group_one_samples])
