@@ -1,4 +1,6 @@
 # Pirma užduotis
+# Viktorija Ramonaitė, Skaistė Bartkutė
+
 setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
 setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
@@ -271,7 +273,7 @@ library(arsenal)
 summary(comparedf(group_df, group_df_new))
 
 # Gauname, kad iš viso 86 mėginių suskirtymas sutampa, o 148 mėginių nesutampa.
-# Kadangi sunku pasakyti, ar yra biologinis pagrindas pašalinti išskirčių grupę, pasiliekama prie šešių grupių dendrogramos
+# Kadangi nėra svarių priežasčių pašalinti išskirčių, pasiliekama prie šešių grupių dendrogramos
 # iš originalaus duomenų rinkinio.
 
 # Atrenkame mėginius iš kiekvienos grupės.
@@ -294,7 +296,6 @@ group_six <- group_df[group_df$group == 6,]
 group_six_samples <- rownames(group_six)
 
 # Kiekvienai grupei sudarome data frame su tos grupės klinikiniais duomenimis.
-# Būtų galima naudoti stack funkciją, tačiau R kažkodėl nulūžta po jos paleidimo.
 group_one_data <- data[,colnames(data) %in% group_one_samples]
 group_one_df <- data.frame(
   sample_name = group_one_samples,
@@ -431,7 +432,7 @@ ggplot(all_groups, aes(x=group, y=age)) +
 
 # Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai,
 # ketvirtoje grupėje: 40 - 49 metai.
-# Kitose grup4se amžiaus intervalai platūs: nuo 40-60 metų.
+# Kitose grupėse amžiaus intervalai platūs: nuo 40-60 metų.
 
 # Heatmap
 
