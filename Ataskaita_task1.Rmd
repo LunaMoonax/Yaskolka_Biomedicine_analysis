@@ -7,24 +7,490 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(paletteer)
+library(showtext)
+library(knitr)
 ```
 
-## R Markdown
+## Duomenų publikacijos aprašymas.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+**Publikacijos pavadinimas**: DNA methylation signature in blood mirrors successful weight-loss during lifestyle interventions: the CENTRAL trial
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+**Publikacijos autoriai**: Maria Keller, Anat Yaskolka Meir, Stephan H. Bernhart, Yftach Gepner, Ilan Shelef, Dan Schwarzfuchs, Gal Tsaban, Hila Zelicha, Lydia Hopp, Luise Müller, Kerstin Rohde, Yvonne Böttcher, Peter F. Stadler, Michael Stumvoll, Matthias Blüher, Peter Kovacs & Iris Shai.
 
-```{r cars}
-summary(cars)
+**Panaudotos analizės**: įvertinta ląstelių kompozicija remiantis Houseman approach, o skirtumai analizuoti Vilkoksono testu. Norint identifikuoti skirtumus diferentiškai metilintuose regionuose (DMR) tarp T0 ir T18 grupių naudotasi DMR ieškotoju ‘metilene’. Atrinkti DMR regionai buvo anotuojami. Tarpusavyje palygintos grupės: T0 ir T18, fizinio aktyvumo (ne)buvimas, mažesnio riebalų/angliavandenių kiekių dietos. Atlikta CpG analizė dmpFinder įrankiu. Kolmogorv-Smirnov testas buvo atliktas norint palyginti DNR metilinimo pokyčius tarp top 10 geriausius ir 10 blogiausius rezultatus pademonstravusių tiriamųjų. Spearmano ir Pearsono koreliacijos testai buvo atlikti norint susieti CpG saleles su sėkmingais kūno masės mažinimo rezultatais. Epigenome-wide association study (EWAS) buvo atlikta reliatyviam kūno masės sumažėjimui naudojantis CMplot. Naudojantis ROC kreivės modeliu nustatytas bazinis metilinimo įvertis. Fenotipų koreliacija T0 ir T18 grupėms su baziniais metilinimo lygiais (identifikuotų CpG salelių, DMR) buvo nustatyta remiantis Pearsono ir Spearmano koreliacijos testais. Identifikuotos DMR, CpG salelės susietos su atitinkamais chromatino segmentais naudojantis Epigenomic Roadmap. Atlikta genų ontologijos analizė.
+
+**Rezultatai**: nustatyti reikšmingi DNR metilinimo pakitimai tarp asmenų, kuriems pavyko sėkmingai pavyko numesti svorio, ir asmenų, kurie susidūrė su sunkumais metant svorį, genuose CRISP2, SLC6A12, SLFN12, AURKC (padidėjęs metilinimo lygis pirmojoje grupėje) ir LRRC27, RNF39, LINC00539, NTSR1 (sumažėjęs metilinimo lygis pirmojoje grupėje).  SLC6A12 metilinimo lygis buvo stipriausiai pakitęs tarp šių grupių. Kai kurie genai siejami su ląstelių adhezija, kalcio jonų prisijungimu (pagal genų ontologijos analizę). Su kūno svorio mažinimo intervencijomis siejami metilinimo pakitimai CpG regionuose, kurie dengia miR-6723 bei MTND1P23 ir MTND1928 pseudogenus. Nustatyta 15 neigiamai su kūno masės pokyčiais koreliuotų CpG salelių, pavyzdžiui, genuose NUDT3 ir NCOR2, ir 32 teigiamai koreliuotos CpG salelės. Stipriausi CpG salelių metilinimo efektai pastebėti netoli MAPKAP1, HM13, KIAA0513 genų lokusų. DMR regionas nuo introno 3 iki 4 egzono geno RNF39 koreliavo su HOMA indeksu ir gliukozės lygiais 17 dengiančių šiam regionui CpG salelių. Didžioji dalis šių salelių buvo neigiamai koreliuotos su adiponektino serumo lygiais bei teigiamai su KMI po intervencijos. DNR metilinimo įvertis reikšmingesnis faktorius prognozuojant sėkmingą svorio mažinimą negu amžius ir KMI.
+
+**Išvados**: 18 mėnesių trunkanti svorio mažinimo programa susijusi su DNR metilinimo pasikeitimais. DNR metilinimas gali tapti potencialu biomarkeriu įvertinant kūno masės mažinimo programos sėkmingumą ir pritaikant specifinį planą asmeniui.
+
+
+```{r graphs, echo=FALSE, warning=FALSE}
+#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+
+library(annmatrix)
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+data <- readRDS("yaskolka.rds")
+
+# Kokybės kontrolė #1
+
+# Annmatrix reikšmių peržiūra
+rowanns(data)
+colanns(data)
+
+# Peržiūrime CpG salų reikšmes
+data@relation_to_island
+
+# Suskaičiuojame metilinimo lygių (beta) vidutines reikšmes eilutėms
+mean_beta <- rowMeans(data, na.rm = TRUE)
+
+# Sukuriame dataframe, kuri bus naudojama grafike
+df <- data.frame(
+  mean_beta = mean_beta,
+  region = data@relation_to_island
+)
+
+# Suskirstome relation_to_island reikšmes 4 grupes, kurios mums yra reikalingos kokybės kontrolei patvirtinti
+df$region_grouped <- case_when(
+  df$region == "Island" ~ "Island",
+  df$region == "OpenSea" ~ "OpenSea",
+  df$region %in% c("N_Shelf", "S_Shelf") ~ "Shelf",
+  df$region %in% c("N_Shore", "S_Shore") ~ "Shore"
+)
+# Sugrupuojame lygiais, kad grafike būtų atvaizduota mums reikalinga tvarka
+df$region_grouped <- factor(df$region_grouped, levels = c("Island", "Shore", "Shelf", "OpenSea"))
+
+# Piešiame grafiką
+ggplot(df, aes(x = mean_beta, color = region_grouped)) +
+  geom_density(linewidth = 1) +
+  labs(
+    x = "Vidutinis metilinimo lygis (beta)",
+    y = "Tankis",
+    color = "Regionas",
+    title = "Metilinimo (beta) reikšmių pasiskirstymas pagal CpG regioną"
+  ) +
+  theme_minimal()
+# Grafike matoma, kad salų regionai yra mažiausiai metilinti, ir didžioji jų dalis yra nemetilinta.
+# Salų krantai yra pusiau nemetilinti ir metilinti.
+# Salų šleifai yra daugiau metilinti nei krantai ar pačios salos.
+# Atviros jūros regionai yra panašiai metilinti kaip šleifai - didžiausia dalis yra metilinta.
+# Grafikas patvirtina, kad CpG salos yra nemetilintos, daugiau yra krantai, o daugiausiai
+# šleifai ir atviros jūros regionai. Vadinasi mūsų mėginiai atitinka kokybės kontrolę.
+
+# Kokybės kontrolė #2
+
+# Apskaičiuojame koreliacijas
+cor_matrix <- cor(data, use = "pairwise.complete.obs")
+
+# Paimame visus stulpelius
+sample_ann <- colanns(data)
+
+# Paimame tik apatinį trikampį (be diagonalės)
+lower <- which(lower.tri(cor_matrix), arr.ind = TRUE)
+pair_cor <- cor_matrix[lower]
+
+# Sukuriame data.frame, kur sužymime, kurie mėginiai yra tarp, o kurie grupės viduje.
+# Bus naudojama grafike.
+df <- data.frame(
+  cor = pair_cor,
+  sex_same = ifelse(sample_ann$sex[lower[,1]] == sample_ann$sex[lower[,2]], "Grupės viduje", "Tarp grupių"),
+  donor_same = ifelse(sample_ann$donor[lower[,1]] == sample_ann$donor[lower[,2]], "Grupės viduje", "Tarp grupių"),
+  diet_same = ifelse(sample_ann$diet[lower[,1]] == sample_ann$diet[lower[,2]], "Grupės viduje", "Tarp grupių"),
+  stimulus_same = ifelse(sample_ann$stimulus[lower[,1]] == sample_ann$stimulus[lower[,2]], "Grupės viduje", "Tarp grupių")
+)
+
+# Sukuriame visų analizuojamų grupių grafikai
+p1 <- ggplot(df, aes(x = cor, color = sex_same)) + geom_density(linewidth = 1) +
+  labs(title = "Lytis", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
+
+p2 <- ggplot(df, aes(x = cor, color = donor_same)) + geom_density(linewidth = 1) +
+  labs(title = "Donoras", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
+
+p3 <- ggplot(df, aes(x = cor, color = diet_same)) + geom_density(linewidth = 1) +
+  labs(title = "Dieta", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
+
+p4 <- ggplot(df, aes(x = cor, color = stimulus_same)) + geom_density(linewidth = 1) +
+  labs(title = "Aktyvumas", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
+
+p1 / p2 / p3 / p4
 ```
 
-## Including Plots
+Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis nei tarp skirtingų grupių. Tai yra rezultatas, kurio ir tikėjomės, vadinasi kokybės kontrolę atitinka. Papildomai patikrinta Dietos ir Aktyvumo grupės. Kadangi šios grupės nebuvo tarp tų, kurios būtų žinomos, kad DNR modifikacija skiriasi, matome kad tiek grupės viduje, tiek tarp grupių yra vienodas panašumas.
 
-You can also embed plots, for example:
+## Išskirčių paieška
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+**Metodas**: Išskirčių paieškai naudojamas Inter-Array Correlation metodas. Pirmiausia, buvo sudaryta koreliacijų matrica.
+Kiekvienam mėginiui buvo apskaičiuota vidutinė koreliacija su kitais mėginiais.Tuomet atrinkti mėginiai, kurių vidutinė koreliacija daugiau negu trimis standartiniais nuokrypiais mažesnė už vidutinę. Iš viso atliktos trys šio metodo iteracijos kiekvieną kartą pašalinant atrastus "išskirčių" mėginius.
+
+```{r outliers, echo=FALSE, warning=FALSE}
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
+# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis.
+outlier_names = c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0")
+data_iteration1 <- data[, !colnames(data) %in% outlier_names]
+
+# Atliekame antrą metodo iteraciją.
+cor_matrix <- cor(data_iteration1, use = "pairwise.complete.obs")
+
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18
+outlier_names = c("144_CENTRAL_T0","175_CENTRAL_T0","18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18")
+data_iteration2 <- data_iteration1[, !colnames(data_iteration1) %in% outlier_names]
+
+# Atliekame trečią metodo iteraciją.
+cor_matrix <- cor(data_iteration2, use = "pairwise.complete.obs")
+
+cor_matrix_adj <- cor_matrix
+diag(cor_matrix_adj) <- 0
+col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+col_mean_cor
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outliers <- col_mean_cor
+outliers[outliers < mean_cor - 3 * sd_cor]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Po pirmosios iteracijos gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0.
+Po antrosios iteracijos gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18.
+Po trečiosios iteracijos gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0.
+Žinant gautų išskirčių mėginių pavadinimus, buvo sudaryta išskirčių duomenų lentelė ir duomenų lentelė, kurioje nėra išskirčių. Visoms išskirtims buvo pavaizduotas beta reikšmių tankis ir buvo pavaizduotas vidutinis beta reikšmių tankis be išskirčių (juoda linija).
+
+```{r outlier graph, echo=FALSE, warning=FALSE}
+# Gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0
+outlier_names = c("126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18","245_CENTRAL_T18","295_CENTRAL_T0")
+
+# Visų outlierių sąrašas.
+all_outliers <- c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18",
+                  "245_CENTRAL_T0","144_CENTRAL_T0","175_CENTRAL_T0",
+                  "18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18",
+                  "126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18",
+                  "245_CENTRAL_T18","295_CENTRAL_T0")
+
+# Padaliname duomenis: vien tik išskirčių duomenų rinkinys ir duomenų rinkinys be išskirčių.
+outlier_data <- data[,colnames(data) %in% all_outliers]
+data_without_outliers <- data[,!colnames(data) %in% all_outliers]
+
+# Norint vizualiai atvaizduoti išskirčių mėginius, sudarome data frame iš išskirčių duomenų rinkinio.
+# Pridedame papildomą stulpelį, kur pažymėtas mėginio sample vardas (jį gauname paėmę dalį eilutės pavadinimo).
+outlier_df <- stack(outlier_data)
+outlier_df$samples <- sub(".*:", "", rownames(outlier_df))
+
+# Apskaičiuojame vidurkius eilučių reikšmėms be išskirčių.
+mean_without_outliers <- rowMeans(data_without_outliers)
+
+# Šiems vidurkiams sudarome data.frame (id paimtas kaip atsitiktinis stulpelis, kad ggplot priimtų šį df).
+df <- data.frame(
+  mean = mean_without_outliers,
+  id = data_without_outliers@id
+)
+
+# Brėžiame bendrą grafiką išskirtims ir lyginame su vidutiniu reikšmių pasiskirstymu be išskirčių.
+p5 <- ggplot() +
+  geom_density(data = outlier_df, aes(x=value, group=samples, fill=samples, color=samples), alpha = 0.4) +
+  geom_density(data = df, aes(x=mean), fill="white", color="black", alpha = 0.1) +
+  labs(title = "Beta reikšmių pasiskirstymas", x = "Beta reikšmė", y = "Tankis", fill = "Mėginys") +
+  guides(color = "none") +
+  theme_minimal() 
+  
+p5
+```
+
+Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę, nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija). Kadangi nėra stiprių skirtumų tankio grafikų formose, nėra pagrindo šalinti biologinių išskirčių.
+
+## Klasterizavimas
+
+**Metodas**: Klasterizavimui sudaryta mėginių atstumų matrica, atstumą skaičiuojant kaip 1 - cor (koreliacija). Naudotas hierarchinis klasterizavimo metodas. Gautas medis buvo dalinamas kelis kartus į skirtingą kiekį grupių, norint sužinoti kur pasiskirstymas grupėmis yra tolygiausias ir proporcingiausias.
+
+```{r clusterization 5groups, echo=FALSE, warning=FALSE}
+library(WGCNA)
+
+cor_dist_matrix <- 1 - stats::cor(data, use = "pairwise.complete.obs")
+cor_dist_matrix <- as.dist(cor_dist_matrix)
+clusters <- stats::hclust(cor_dist_matrix)
+
+# Nubraižomas klasterizavimo grafikas (be mėginių pavadinimų norint išlaikyti tvarkingumą
+# pamatyti vizualias grupes)
+plotDendroAndColors(clusters, NULL, dendroLabels = FALSE)
+
+# Dendrogramoje brėžiant liniją apytiklsiai ties viduriniu aukščiu, matomos 5 ryškiausios grupės.
+groups <- cutree(clusters, k = 5)
+
+# Gaunamas sąrašas su mėginiais ir priskirtuoju grupės numeriu, iš naujo braižomas klasterizavimo grafikas
+# su spalvomis priskirtai grupei.
+colors <- c("purple","red","green","blue","yellow")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+```
+
+Medis padalintas į penkias dalis. Gaunasi viena labai didelė grupė, trys smulkesnės grupės, ir viena labai maža grupė, kuri gali rodyti išskirtis. Padaliname medį į daugiau dalių, norint gauti grupes, kurios mažiau besiskiria savo dydžiu. Procesas pakartotas.
+
+```{r clusterization 6groups, echo=FALSE, warning=FALSE}
+groups <- cutree(clusters, k = 6)
+colors <- c("purple","red","green","blue","yellow","orange")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+```
+
+Padalinus medį į šešias dalį, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas atrodo geriau, bet vis dar matoma ta pati smulki, tikriausiai išskirčių grupė kaip prieš tai.
+
+```{r clusterization 4groups, echo=FALSE, warning=FALSE}
+# Dėl įdomumo suskirstykime medį į mažiau grupių negu pradinis variantas - 4.
+groups <- cutree(clusters, k = 4)
+colors <- c("purple","red","green","blue")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+```
+
+Dėl įdomumo medis buvo suskirstytas negu pradinis variantas - 4. Toks suskirstymas atrodo blogas, susidaro proporcingai per didelė viena grupė. Geriausias variantas: 6 grupės.
+
+```{r clusterization original, echo=FALSE, warning=FALSE}
+groups <- cutree(clusters, k = 6)
+colors <- c("purple","red","green","blue","yellow","orange")
+dendogram_colors <- colors[groups]
+
+# Smulkiausia grupė (oranžinės spalvos), yra galimos išskirtys.
+# Sudarome data frame, grupių ir mėginių peržiūrai.
+group_df <- data.frame(groups, dendogram_colors)
+outlier_group <- group_df[group_df$dendogram_colors == "orange",]
+outlier_samples <- rownames(outlier_group)
+```
+
+Medis, padalintas į šešias dalis turi smulkią oranžinę grupę. Jai priklauso mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18. Trys iš jų sutampa su praeitu išskirčių sąrašu: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0. Klasterizavimo procesas pakartotas pašalinus oranžinės grupės mėginius.
+
+```{r clusterization wo outliers, echo=FALSE, warning=FALSE}
+# Pakartojame klasterizavimo procesą, šį kartą be išskirčių.
+data_without_outliers_new <- data[,!colnames(data) %in% outlier_samples]
+cor_dist_matrix <- 1 - stats::cor(data_without_outliers_new, use = "pairwise.complete.obs")
+cor_dist_matrix <- as.dist(cor_dist_matrix)
+clusters <- stats::hclust(cor_dist_matrix)
+
+groups <- cutree(clusters, k = 5)
+colors <- c("purple","red","green","blue","yellow")
+dendogram_colors <- colors[groups]
+plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
+```
+
+Pagal spalvų susiskirstymą gauname iš esmės tas pačias grupes, tik sukeistas vietomis ir su pasikeitusia dendrogramos struktūra. Buvo palygintas mėginių suskirstymas grupėms pašalinus oranžinės grupės mėginius ir juos palikus. Sutampa 86 mėginių paskirstymas grupėms, o 148 mėginių - nesutampa. Tačiau nėra stipraus argumento pašalinti oranžinę grupę, todėl pasiliekama prie šešių grupių dendogramos nešalinant mėginių. Tuomet atlikta mėginių klinikinių charakteristikų analizė pagal iš klasterizavimo gautas grupes.
+
+```{r clusterization clinical, echo=FALSE, warning=FALSE}
+group_df_new <- data.frame(groups, dendogram_colors)
+
+# Palyginame suskirstymą grupėmis pirmu ir antru atveju (be išskirčių).
+library(arsenal)
+summary(comparedf(group_df, group_df_new))
+
+# Gauname, kad iš viso 86 mėginių suskirtymas sutampa, o 148 mėginių nesutampa.
+# Kadangi sunku pasakyti, ar yra biologinis pagrindas pašalinti išskirčių grupę, pasiliekama prie šešių grupių dendrogramos
+# iš originalaus duomenų rinkinio.
+
+# Atrenkame mėginius iš kiekvienos grupės.
+group_one <- group_df[group_df$group == 1,]
+group_one_samples <- rownames(group_one)
+
+group_two <- group_df[group_df$group == 2,]
+group_two_samples <- rownames(group_two)
+
+group_three <- group_df[group_df$group == 3,]
+group_three_samples <- rownames(group_three)
+
+group_four <- group_df[group_df$group == 4,]
+group_four_samples <- rownames(group_four)
+
+group_five <- group_df[group_df$group == 5,]
+group_five_samples <- rownames(group_five)
+
+group_six <- group_df[group_df$group == 6,]
+group_six_samples <- rownames(group_six)
+
+# Kiekvienai grupei sudarome data frame su tos grupės klinikiniais duomenimis.
+# Būtų galima naudoti stack funkciją, tačiau R kažkodėl nulūžta po jos paleidimo.
+group_one_data <- data[,colnames(data) %in% group_one_samples]
+group_one_df <- data.frame(
+  sample_name = group_one_samples,
+  diet = group_one_data$diet,
+  stimulus = group_one_data$stimulus,
+  timepoint = group_one_data$timepoint,
+  sex = group_one_data$sex,
+  age = group_one_data$age
+)
+
+group_two_data <- data[,colnames(data) %in% group_two_samples]
+group_two_df <- data.frame(
+  sample_name = group_two_samples,
+  diet = group_two_data$diet,
+  stimulus = group_two_data$stimulus,
+  timepoint = group_two_data$timepoint,
+  sex = group_two_data$sex,
+  age = group_two_data$age
+)
+
+group_three_data <- data[,colnames(data) %in% group_three_samples]
+group_three_df <- data.frame(
+  sample_name = group_three_samples,
+  diet = group_three_data$diet,
+  stimulus = group_three_data$stimulus,
+  timepoint = group_three_data$timepoint,
+  sex = group_three_data$sex,
+  age = group_three_data$age
+)
+
+group_four_data <- data[,colnames(data) %in% group_four_samples]
+group_four_df <- data.frame(
+  sample_name = group_four_samples,
+  diet = group_four_data$diet,
+  stimulus = group_four_data$stimulus,
+  timepoint = group_four_data$timepoint,
+  sex = group_four_data$sex,
+  age = group_four_data$age
+)
+
+group_five_data <- data[,colnames(data) %in% group_five_samples]
+group_five_df <- data.frame(
+  sample_name = group_five_samples,
+  diet = group_five_data$diet,
+  stimulus = group_five_data$stimulus,
+  timepoint = group_five_data$timepoint,
+  sex = group_five_data$sex,
+  age = group_five_data$age
+)
+
+group_six_data <- data[,colnames(data) %in% group_six_samples]
+group_six_df <- data.frame(
+  sample_name = group_six_samples,
+  diet = group_six_data$diet,
+  stimulus = group_six_data$stimulus,
+  timepoint = group_six_data$timepoint,
+  sex = group_six_data$sex,
+  age = group_six_data$age
+)
+
+# Kiekvienai grupei priskiriame stulpelį su grupės pavadinimu (reikės grafikui).
+group_one_df$group <- "one"
+group_two_df$group <- "two"
+group_three_df$group <- "three"
+group_four_df$group <- "four"
+group_five_df$group <- "five"
+group_six_df$group <- "six"
+
+# Visas grupes apjungiame į vieną data frame.
+all_groups <- rbind(group_one_df, group_two_df, group_three_df, group_four_df, group_five_df, group_six_df)
+
+# Braižome grafikus klinikiniams duomenims atsižvelgdami į grupes.
+ggplot(all_groups, aes(x=group, fill=as.factor(diet))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Dietos tipas",
+    title = "Mėginių grupių pasiskirstymas pagal dietos tipą"
+  ) +
+  theme_minimal()
+```
+
+Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi ketvirtoje, trečioje grupėje. Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje - žemo riebalų kiekio dieta.
+
+```{r stimulus, echo=FALSE, warning=FALSE}
+ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Fizinio aktyvumo (ne)buvimas",
+    title = "Mėginių grupių pasiskirstymas pagal fizinio aktyvumo (ne)buvimą"
+  ) +
+  theme_minimal()
+```
+
+Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra grupės. Nedideli skirtumai pastebimi ketvirtoje ir šeštoje grupėse. Trečioje grupėje daugiau asmenų, kurie užsiėmė fiziniu aktyvumu. Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
+
+```{r timepoint, echo=FALSE, warning=FALSE}
+ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Mėginių paėmimo laikotarpis",
+    title = "Mėginių grupių pasiskirstymas pagal mėginių paėmimo laikotarpį"
+  ) +
+  theme_minimal()
+```
+
+Visose grupėse mėginiai pasiskirstę vienodai pagal mėginių paėmimo laikotarpius.
+
+```{r gender, echo=FALSE, warning=FALSE}
+ggplot(all_groups, aes(x=group, fill=as.factor(sex))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Lytis",
+    title = "Mėginių grupių pasiskirstymas pagal lytį"
+  ) +
+  theme_minimal()
+
+```
+
+Pirmoje, antroje, trečioje, ketvirtoje grupėse vien tik vyrai. Penktoje ir šeštoje grupėje vien tik moterys.
+
+```{r age, echo=FALSE, warning=FALSE}
+ggplot(all_groups, aes(x=group, y=age)) +
+  geom_boxplot(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Amžius",
+    title = "Mėginių grupių pasiskirstymas pagal amžių"
+  ) +
+  theme_minimal()
+```
+
+Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai, ketvirtoje grupėje: 40 - 49 metai. Kitose grupėse amžiaus intervalai platūs: nuo 40-60 metų. Stipriausias grupių pasiskirstymas pastebimas pagal lytį, nestiprią įtaką daro dieta, fizinis aktyvumas, amžius, tačiau daugiausiai informacijos nusako DNR metilinimo pokyčiai, kurių įverčiai apsprendžia susiskirstymą į grupes.
+
+## Heatmap
+
+**Metodas**: norint sudaryti heatmap, reikėjo atsirinkti fiksuotą skaičių cg pozicijų. Todėl buvo apskaičiuota kiekvienos cg pozicijos variacija, o pačios cg pozicijos surikiuotos pagal variacijos mažėjimą. Paimta 1000, 100, 10 labiausiai varijuojančių cg pozicijų bei sudaryti trys heat'mapai.
+
+```{r heatmap, echo=FALSE, warning=FALSE, fig.width=10, fig.height=10}
+# Apskaičiuota variacija kiekvienai duomenų matricos eilutei.
+cg_variance <- apply(data, 1, var)
+
+# Matrica išrikiuota mažėjimo tvarka pagal eilučių variaciją.
+cg_matrix <- data[order(cg_variance, decreasing = TRUE),]
+
+# Heatmap su 1000 eilučių.
+cg_matrix_1000 <- cg_matrix[1:1000,]
+#heatmap(cg_matrix_1000)
+
+# Heatmap su 100 eilučių.
+cg_matrix_100 <- cg_matrix[1:100,]
+heatmap(cg_matrix_100)
+
+# Heatmap su 10 eilučių.
+cg_matrix_10 <- cg_matrix[1:10,]
+heatmap(cg_matrix_10)
+
+```
+
+Pirmame heatmap'e sunku įžvelgti grupes.
