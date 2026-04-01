@@ -274,6 +274,7 @@ summary(comparedf(group_df, group_df_new))
 # Kadangi sunku pasakyti, ar yra biologinis pagrindas pašalinti išskirčių grupę, pasiliekama prie šešių grupių dendrogramos
 # iš originalaus duomenų rinkinio.
 
+# Atrenkame mėginius iš kiekvienos grupės.
 group_one <- group_df[group_df$group == 1,]
 group_one_samples <- rownames(group_one)
 
@@ -292,4 +293,142 @@ group_five_samples <- rownames(group_five)
 group_six <- group_df[group_df$group == 6,]
 group_six_samples <- rownames(group_six)
 
-group_one_df <- stack(data[,colnames(data) %in% group_one_samples])
+# Kiekvienai grupei sudarome data frame su tos grupės klinikiniais duomenimis.
+# Būtų galima naudoti stack funkciją, tačiau R kažkodėl nulūžta po jos paleidimo.
+group_one_data <- data[,colnames(data) %in% group_one_samples]
+group_one_df <- data.frame(
+  sample_name = group_one_samples,
+  diet = group_one_data$diet,
+  stimulus = group_one_data$stimulus,
+  timepoint = group_one_data$timepoint,
+  sex = group_one_data$sex,
+  age = group_one_data$age
+)
+
+group_two_data <- data[,colnames(data) %in% group_two_samples]
+group_two_df <- data.frame(
+  sample_name = group_two_samples,
+  diet = group_two_data$diet,
+  stimulus = group_two_data$stimulus,
+  timepoint = group_two_data$timepoint,
+  sex = group_two_data$sex,
+  age = group_two_data$age
+)
+
+group_three_data <- data[,colnames(data) %in% group_three_samples]
+group_three_df <- data.frame(
+  sample_name = group_three_samples,
+  diet = group_three_data$diet,
+  stimulus = group_three_data$stimulus,
+  timepoint = group_three_data$timepoint,
+  sex = group_three_data$sex,
+  age = group_three_data$age
+)
+
+group_four_data <- data[,colnames(data) %in% group_four_samples]
+group_four_df <- data.frame(
+  sample_name = group_four_samples,
+  diet = group_four_data$diet,
+  stimulus = group_four_data$stimulus,
+  timepoint = group_four_data$timepoint,
+  sex = group_four_data$sex,
+  age = group_four_data$age
+)
+
+group_five_data <- data[,colnames(data) %in% group_five_samples]
+group_five_df <- data.frame(
+  sample_name = group_five_samples,
+  diet = group_five_data$diet,
+  stimulus = group_five_data$stimulus,
+  timepoint = group_five_data$timepoint,
+  sex = group_five_data$sex,
+  age = group_five_data$age
+)
+
+group_six_data <- data[,colnames(data) %in% group_six_samples]
+group_six_df <- data.frame(
+  sample_name = group_six_samples,
+  diet = group_six_data$diet,
+  stimulus = group_six_data$stimulus,
+  timepoint = group_six_data$timepoint,
+  sex = group_six_data$sex,
+  age = group_six_data$age
+)
+
+# Kiekvienai grupei priskiriame stulpelį su grupės pavadinimu (reikės grafikui).
+group_one_df$group <- "one"
+group_two_df$group <- "two"
+group_three_df$group <- "three"
+group_four_df$group <- "four"
+group_five_df$group <- "five"
+group_six_df$group <- "six"
+
+# Visas grupes apjungiame į vieną data frame.
+all_groups <- rbind(group_one_df, group_two_df, group_three_df, group_four_df, group_five_df, group_six_df)
+
+# Braižome grafikus klinikiniams duomenims atsižvelgdami į grupes.
+ggplot(all_groups, aes(x=group, fill=as.factor(diet))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Dietos tipas",
+    title = "Mėginių grupių pasiskirstymas pagal dietos tipą"
+  ) +
+  theme_minimal()
+
+# Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi ketvirtoje, trečioje grupėje.
+# Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje - žemo riebalų kiekio dieta.
+
+ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Fizinio aktyvumo (ne)buvimas",
+    title = "Mėginių grupių pasiskirstymas pagal fizinio aktyvumo (ne)buvimą"
+  ) +
+  theme_minimal()
+
+# Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra grupės.
+# Nedideli skirtumai pastebimi ketvirtoje ir šeštoje grupėse.
+# Trečioje grupėje daugiau asmenų, kurie užsiėmė fiziniu aktyvumu.
+# Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
+
+ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Mėginių paėmimo laikotarpis",
+    title = "Mėginių grupių pasiskirstymas pagal mėginių paėmimo laikotarpį"
+  ) +
+  theme_minimal()
+
+# Visose grupėse mėginiai pasiskirstę vienodai pagal mėginių paėmimo laikotarpius.
+
+ggplot(all_groups, aes(x=group, fill=as.factor(sex))) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Mėginių kiekis",
+    fill = "Lytis",
+    title = "Mėginių grupių pasiskirstymas pagal lytį"
+  ) +
+  theme_minimal()
+
+# Pirmoje, antroje, trečioje, ketvirtoje grupėse vien tik vyrai.
+# Penktoje ir šeštoje grupėje vien tik moterys.
+
+ggplot(all_groups, aes(x=group, y=age)) +
+  geom_boxplot(position = "dodge") +
+  labs(
+    x = "Grupė",
+    y = "Amžius",
+    title = "Mėginių grupių pasiskirstymas pagal amžių"
+  ) +
+  theme_minimal()
+
+# Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai,
+# ketvirtoje grupėje: 40 - 49 metai.
+# Kitose grup4se am=iaus intervalai platūs: nuo 40-60 metų.
