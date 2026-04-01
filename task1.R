@@ -431,4 +431,24 @@ ggplot(all_groups, aes(x=group, y=age)) +
 
 # Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai,
 # ketvirtoje grupėje: 40 - 49 metai.
-# Kitose grup4se am=iaus intervalai platūs: nuo 40-60 metų.
+# Kitose grup4se amžiaus intervalai platūs: nuo 40-60 metų.
+
+# Heatmap
+
+# Apskaičiuota variacija kiekvienai duomenų matricos eilutei.
+cg_variance <- apply(data, 1, var)
+
+# Matrica išrikiuota mažėjimo tvarka pagal eilučių variaciją.
+cg_matrix <- data[order(cg_variance, decreasing = TRUE),]
+
+# Heatmap su 1000 eilučių.
+cg_matrix_1000 <- cg_matrix[1:1000,]
+heatmap(cg_matrix_1000)
+
+# Heatmap su 100 eilučių.
+cg_matrix_100 <- cg_matrix[1:100,]
+heatmap(cg_matrix_100)
+
+# Heatmap su 10 eilučių.
+cg_matrix_10 <- cg_matrix[1:10,]
+heatmap(cg_matrix_10)
