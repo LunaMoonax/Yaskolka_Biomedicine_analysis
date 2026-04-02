@@ -108,66 +108,69 @@ p1 / p2 / p3 / p4
 # Norint teisingai apskaičiuoti vidutinę koreliaciją su kitais mėginiais,
 # koreliacijų matricoje turime ignoruoti mėginių koreliacijas su savimi, t.y. matricos diagonales reikšmes 1.
 # Matricos diagonalę pakeičiame nuliais, o skaičiuojant vidurkį iš eilučių kiekio atimame vieną.
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
 col_mean_cor
 
 # Trečias žingsnis: atrinkti mėginius, kurių vidutinė koreliacija daugiau negu trimis standartiniais
 # nuokrypiais mažesnė už vidutinę.
 mean_cor <- mean(col_mean_cor)
 sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+outlier_names
 
 # Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
-# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis.
-outlier_names = c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0")
-data_iteration1 <- data[, !colnames(data) %in% outlier_names]
+# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis pridėdami 
+# atitinkamus papildomus mėginius pagal mėginio paėmimo laikotarpį.
+outlier_names = c("182_CENTRAL_T0","182_CENTRAL_T18","198_CENTRAL_T0","198_CENTRAL_T18",
+                  "23_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0", "245_CENTRAL_T18")
+data_without_outliers <- data[, !colnames(data) %in% outlier_names]
 
 # Atliekame antrą metodo iteraciją.
-cor_matrix <- cor(data_iteration1, use = "pairwise.complete.obs")
+cor_matrix <- cor(data_without_outliers, use = "pairwise.complete.obs")
 
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
 col_mean_cor
 
 mean_cor <- mean(col_mean_cor)
 sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+outlier_names
 
-# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18
-outlier_names = c("144_CENTRAL_T0","175_CENTRAL_T0","18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18")
-data_iteration2 <- data_iteration1[, !colnames(data_iteration1) %in% outlier_names]
+# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18, 233_CENTRAL_T18,
+# Pridedame jas prie egzistuojančių išskirčių sąrašo.
+outlier_names = c("144_CENTRAL_T0","144_CENTRAL_T18","175_CENTRAL_T0","175_CENTRAL_T18","18_CENTRAL_T0",
+                  "18_CENTRAL_T18","266_CENTRAL_T0","266_CENTRAL_T18","233_CENTRAL_T0","233_CENTRAL_T18",
+                  "182_CENTRAL_T0","182_CENTRAL_T18","198_CENTRAL_T0","198_CENTRAL_T18",
+                  "23_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0", "245_CENTRAL_T18")
+data_without_outliers <- data[, !colnames(data) %in% outlier_names]
 
 # Atliekame trečią metodo iteraciją.
-cor_matrix <- cor(data_iteration2, use = "pairwise.complete.obs")
+cor_matrix <- cor(data_without_outliers, use = "pairwise.complete.obs")
 
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
 col_mean_cor
 
 mean_cor <- mean(col_mean_cor)
 sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+outlier_names
 
-# Gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0
-outlier_names = c("126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18","245_CENTRAL_T18","295_CENTRAL_T0")
-
-# Visų outlierių sąrašas.
-all_outliers <- c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18",
-                  "245_CENTRAL_T0","144_CENTRAL_T0","175_CENTRAL_T0",
-                  "18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18",
-                  "126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18",
-                  "245_CENTRAL_T18","295_CENTRAL_T0")
+# Gautos išskirtys: 126_CENTRAL_T0, 295_CENTRAL_T0, 305_CENTRAL_T0, 305_CENTRAL_T18, 309_CENTRAL_T0
+# Sudarom bendrą visų outlierių sąrašą
+outlier_names = c("126_CENTRAL_T0", "126_CENTRAL_T18", "295_CENTRAL_T0", "295_CENTRAL_T18", 
+                  "305_CENTRAL_T0", "305_CENTRAL_T18", "309_CENTRAL_T0", "309_CENTRAL_T18",
+                  "144_CENTRAL_T0","144_CENTRAL_T18","175_CENTRAL_T0","175_CENTRAL_T18",
+                  "18_CENTRAL_T0", "18_CENTRAL_T18","266_CENTRAL_T0","266_CENTRAL_T18",
+                  "233_CENTRAL_T0","233_CENTRAL_T18", "182_CENTRAL_T0","182_CENTRAL_T18",
+                  "198_CENTRAL_T0","198_CENTRAL_T18","23_CENTRAL_T0","23_CENTRAL_T18",
+                  "245_CENTRAL_T0", "245_CENTRAL_T18")
 
 # Padaliname duomenis: vien tik išskirčių duomenų rinkinys ir duomenų rinkinys be išskirčių.
-outlier_data <- data[,colnames(data) %in% all_outliers]
-data_without_outliers <- data[,!colnames(data) %in% all_outliers]
+outlier_data <- data[,colnames(data) %in% outlier_names]
+data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 
 # Norint vizualiai atvaizduoti išskirčių mėginius, sudarome data frame iš išskirčių duomenų rinkinio.
 # Pridedame papildomą stulpelį, kur pažymėtas mėginio sample vardas (jį gauname paėmę dalį eilutės pavadinimo).
@@ -175,11 +178,11 @@ outlier_df <- stack(outlier_data)
 outlier_df$samples <- sub(".*:", "", rownames(outlier_df))
 
 # Apskaičiuojame vidurkius eilučių reikšmėms be išskirčių.
-mean_without_outliers <- rowMeans(data_without_outliers)
+mean_beta <- rowMeans(data_without_outliers)
 
 # Šiems vidurkiams sudarome data.frame (id paimtas kaip atsitiktinis stulpelis, kad ggplot priimtų šį df).
 df <- data.frame(
-  mean = mean_without_outliers,
+  mean = mean_beta,
   id = data_without_outliers@id
 )
 
@@ -192,6 +195,9 @@ p5 <- ggplot() +
   theme_minimal() 
   
 p5
+
+colanns(outlier_data)
+# 
 
 # Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę,
 # nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija).
@@ -443,13 +449,10 @@ cg_variance <- apply(data, 1, var)
 cg_matrix <- data[order(cg_variance, decreasing = TRUE),]
 
 # Heatmap su 1000 eilučių.
-cg_matrix_1000 <- cg_matrix[1:1000,]
-heatmap(cg_matrix_1000)
+heatmap(cg_matrix[1:1000,])
 
 # Heatmap su 100 eilučių.
-cg_matrix_100 <- cg_matrix[1:100,]
-heatmap(cg_matrix_100)
+heatmap(cg_matrix[1:100,])
 
 # Heatmap su 10 eilučių.
-cg_matrix_10 <- cg_matrix[1:10,]
-heatmap(cg_matrix_10)
+heatmap(cg_matrix[1:10,])
