@@ -196,12 +196,40 @@ p5 <- ggplot() +
   
 p5
 
-colanns(outlier_data)
-# 
-
 # Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę,
 # nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija).
-# Kadangi nėra stiprių skirtumų tankio grafikų formose, nėra pagrindo šalinti biologinių išskirčių.
+# Dėl to atsiranda triukšmingumas duomenyse, bet pagal išskirčių pasiskirstymo formas, neatrodo, kad yra techninių klaidų.
+
+# Išskirčių klinikinių duomenų lentelė.
+outlier_df <- data.frame(
+  id = outlier_data$id,
+  diet = outlier_data$diet,
+  stimulus = outlier_data$stimulus,
+  sex = outlier_data$sex,
+  age = outlier_data$age
+)
+outlier_df
+
+female_samples <- data$id[as.character(data$sex) == "F"]
+female_samples
+
+# Moterų mėginiai sudaro nedidelę dalį visų mėginių.
+# Tai mėginiai: 126, 175, 182, 23, 233, 235, 245, 255, 305, 309.
+# Su išskirtimis sutampa: 126, 175, 182, 23, 233, 245, 305, 309.
+# Tai biologinė priežastis, paaiškinanti šių išskirčių buvimą, todėl šie mėginiai bus paliekami duomenų rinkinyje.
+
+# Likę išskirčių mėginiai: 295, 144, 18, 266, 198.
+
+summary(data$age)
+outlier_df
+
+# Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų,
+# išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje.
+
+# Dėl triukšmingumo pašalinami mėginiai: 295, 144, 18, 266, kurie neturėjo daugiau biologinių indikacijų.
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
+data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 
 # Klasterizavimas
 
