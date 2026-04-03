@@ -40,13 +40,6 @@ data <- readRDS("yaskolka.rds")
 
 # Kokybės kontrolė #1
 
-# Annmatrix reikšmių peržiūra
-rowanns(data)
-colanns(data)
-
-# Peržiūrime CpG salų reikšmes
-data@relation_to_island
-
 # Suskaičiuojame metilinimo lygių (beta) vidutines reikšmes eilutėms
 mean_beta <- rowMeans(data, na.rm = TRUE)
 
@@ -126,74 +119,69 @@ Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis n
 ## Išskirčių paieška
 
 **Metodas**: Išskirčių paieškai naudojamas Inter-Array Correlation metodas. Pirmiausia, buvo sudaryta koreliacijų matrica.
-Kiekvienam mėginiui buvo apskaičiuota vidutinė koreliacija su kitais mėginiais.Tuomet atrinkti mėginiai, kurių vidutinė koreliacija daugiau negu trimis standartiniais nuokrypiais mažesnė už vidutinę. Iš viso atliktos trys šio metodo iteracijos kiekvieną kartą pašalinant atrastus "išskirčių" mėginius.
-
-```{r outliers, echo=FALSE, warning=FALSE}
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
-col_mean_cor
-
-mean_cor <- mean(col_mean_cor)
-sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
-
-# Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
-# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis.
-outlier_names = c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0")
-data_iteration1 <- data[, !colnames(data) %in% outlier_names]
-
-# Atliekame antrą metodo iteraciją.
-cor_matrix <- cor(data_iteration1, use = "pairwise.complete.obs")
-
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
-col_mean_cor
-
-mean_cor <- mean(col_mean_cor)
-sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
-
-# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18
-outlier_names = c("144_CENTRAL_T0","175_CENTRAL_T0","18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18")
-data_iteration2 <- data_iteration1[, !colnames(data_iteration1) %in% outlier_names]
-
-# Atliekame trečią metodo iteraciją.
-cor_matrix <- cor(data_iteration2, use = "pairwise.complete.obs")
-
-cor_matrix_adj <- cor_matrix
-diag(cor_matrix_adj) <- 0
-col_mean_cor <- colSums(cor_matrix_adj) / (nrow(cor_matrix_adj) - 1)
-col_mean_cor
-
-mean_cor <- mean(col_mean_cor)
-sd_cor <- sd(col_mean_cor)
-outliers <- col_mean_cor
-outliers[outliers < mean_cor - 3 * sd_cor]
-```
-
-Po pirmosios iteracijos gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0.
-Po antrosios iteracijos gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18.
-Po trečiosios iteracijos gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0.
-Žinant gautų išskirčių mėginių pavadinimus, buvo sudaryta išskirčių duomenų lentelė ir duomenų lentelė, kurioje nėra išskirčių. Visoms išskirtims buvo pavaizduotas beta reikšmių tankis ir buvo pavaizduotas vidutinis beta reikšmių tankis be išskirčių (juoda linija).
+Kiekvienam mėginiui buvo apskaičiuota vidutinė koreliacija su kitais mėginiais. Tuomet atrinkti mėginiai, kurių vidutinė koreliacija daugiau negu trimis standartiniais nuokrypiais mažesnė už vidutinę. Iš viso atliktos trys šio metodo iteracijos kiekvieną kartą pašalinant atrastus "išskirčių" mėginius (poromis).
 
 ```{r outlier graph, echo=FALSE, warning=FALSE}
-# Gautos išskirtys: 126_CENTRAL_T0, 175_CENTRAL_T18, 233_CENTRAL_T18, 245_CENTRAL_T18, 295_CENTRAL_T0
-outlier_names = c("126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18","245_CENTRAL_T18","295_CENTRAL_T0")
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
+reference <- col_mean_cor
 
-# Visų outlierių sąrašas.
-all_outliers <- c("182_CENTRAL_T0","198_CENTRAL_T0","23_CENTRAL_T18",
-                  "245_CENTRAL_T0","144_CENTRAL_T0","175_CENTRAL_T0",
-                  "18_CENTRAL_T0","18_CENTRAL_T18","266_CENTRAL_T18",
-                  "126_CENTRAL_T0","175_CENTRAL_T18","233_CENTRAL_T18",
-                  "245_CENTRAL_T18","295_CENTRAL_T0")
+# Trečias žingsnis: atrinkti mėginius, kurių vidutinė koreliacija daugiau negu trimis standartiniais
+# nuokrypiais mažesnė už vidutinę.
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+
+reference_mean <- mean_cor
+
+# Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
+# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis pridėdami 
+# atitinkamus papildomus mėginius pagal mėginio paėmimo laikotarpį.
+outlier_names = c("182_CENTRAL_T0","182_CENTRAL_T18","198_CENTRAL_T0","198_CENTRAL_T18",
+                  "23_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0", "245_CENTRAL_T18")
+data_without_outliers <- data[, !colnames(data) %in% outlier_names]
+
+# Atliekame antrą metodo iteraciją.
+cor_matrix <- cor(data_without_outliers, use = "pairwise.complete.obs")
+
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18, 233_CENTRAL_T18,
+# Pridedame jas prie egzistuojančių išskirčių sąrašo.
+outlier_names = c("144_CENTRAL_T0","144_CENTRAL_T18","175_CENTRAL_T0","175_CENTRAL_T18","18_CENTRAL_T0",
+                  "18_CENTRAL_T18","266_CENTRAL_T0","266_CENTRAL_T18","233_CENTRAL_T0","233_CENTRAL_T18",
+                  "182_CENTRAL_T0","182_CENTRAL_T18","198_CENTRAL_T0","198_CENTRAL_T18",
+                  "23_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0", "245_CENTRAL_T18")
+data_without_outliers <- data[, !colnames(data) %in% outlier_names]
+
+# Atliekame trečią metodo iteraciją.
+cor_matrix <- cor(data_without_outliers, use = "pairwise.complete.obs")
+
+diag(cor_matrix) <- 0
+col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
+
+mean_cor <- mean(col_mean_cor)
+sd_cor <- sd(col_mean_cor)
+outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
+
+# Gautos išskirtys: 126_CENTRAL_T0, 295_CENTRAL_T0, 305_CENTRAL_T0, 305_CENTRAL_T18, 309_CENTRAL_T0
+# Sudarom bendrą visų outlierių sąrašą
+outlier_names = c("126_CENTRAL_T0", "126_CENTRAL_T18", "295_CENTRAL_T0", "295_CENTRAL_T18", 
+                  "305_CENTRAL_T0", "305_CENTRAL_T18", "309_CENTRAL_T0", "309_CENTRAL_T18",
+                  "144_CENTRAL_T0","144_CENTRAL_T18","175_CENTRAL_T0","175_CENTRAL_T18",
+                  "18_CENTRAL_T0", "18_CENTRAL_T18","266_CENTRAL_T0","266_CENTRAL_T18",
+                  "233_CENTRAL_T0","233_CENTRAL_T18", "182_CENTRAL_T0","182_CENTRAL_T18",
+                  "198_CENTRAL_T0","198_CENTRAL_T18","23_CENTRAL_T0","23_CENTRAL_T18",
+                  "245_CENTRAL_T0", "245_CENTRAL_T18")
 
 # Padaliname duomenis: vien tik išskirčių duomenų rinkinys ir duomenų rinkinys be išskirčių.
-outlier_data <- data[,colnames(data) %in% all_outliers]
-data_without_outliers <- data[,!colnames(data) %in% all_outliers]
+outlier_data <- data[,colnames(data) %in% outlier_names]
+data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 
 # Norint vizualiai atvaizduoti išskirčių mėginius, sudarome data frame iš išskirčių duomenų rinkinio.
 # Pridedame papildomą stulpelį, kur pažymėtas mėginio sample vardas (jį gauname paėmę dalį eilutės pavadinimo).
@@ -201,11 +189,11 @@ outlier_df <- stack(outlier_data)
 outlier_df$samples <- sub(".*:", "", rownames(outlier_df))
 
 # Apskaičiuojame vidurkius eilučių reikšmėms be išskirčių.
-mean_without_outliers <- rowMeans(data_without_outliers)
+mean_beta <- rowMeans(data_without_outliers)
 
 # Šiems vidurkiams sudarome data.frame (id paimtas kaip atsitiktinis stulpelis, kad ggplot priimtų šį df).
 df <- data.frame(
-  mean = mean_without_outliers,
+  mean = mean_beta,
   id = data_without_outliers@id
 )
 
@@ -218,9 +206,59 @@ p5 <- ggplot() +
   theme_minimal() 
   
 p5
+
+# Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę,
+# nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija).
+# Dėl to atsiranda triukšmingumas duomenyse, bet pagal išskirčių pasiskirstymo formas, neatrodo, kad yra techninių klaidų.
 ```
 
+Po pirmosios iteracijos gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0.
+Po antrosios iteracijos gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18, 233_CENTRAL_T18.
+Po trečiosios iteracijos gautos išskirtys: 126_CENTRAL_T0, 295_CENTRAL_T0, 305_CENTRAL_T18, 305_CENTRAL_T18, 309_CENTRAL_T0.
+Žinant gautų išskirčių mėginių pavadinimus, buvo sudaryta išskirčių duomenų lentelė ir duomenų lentelė, kurioje nėra išskirčių. Visoms išskirtims buvo pavaizduotas beta reikšmių tankis ir buvo pavaizduotas vidutinis beta reikšmių tankis be išskirčių (juoda linija).
+
 Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę, nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija). Kadangi nėra stiprių skirtumų tankio grafikų formose, nėra pagrindo šalinti biologinių išskirčių.
+
+```{r outlier data, echo=FALSE, warning=FALSE}
+
+# Išskirčių klinikinių duomenų lentelė.
+outlier_df <- data.frame(
+  id = outlier_data$id,
+  diet = outlier_data$diet,
+  stimulus = outlier_data$stimulus,
+  sex = outlier_data$sex,
+  age = outlier_data$age
+)
+
+female_samples <- data$id[as.character(data$sex) == "F"]
+
+# Moterų mėginiai sudaro nedidelę dalį visų mėginių.
+# Tai mėginiai: 126, 175, 182, 23, 233, 235, 245, 255, 305, 309.
+# Su išskirtimis sutampa: 126, 175, 182, 23, 233, 245, 305, 309.
+# Tai biologinė priežastis, paaiškinanti šių išskirčių buvimą, todėl šie mėginiai bus paliekami duomenų rinkinyje.
+
+# Likę išskirčių mėginiai: 295, 144, 18, 266, 198.
+
+summary(data$age)
+outlier_df
+
+# Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų,
+# išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje.
+
+# Palyginamos mėginių vidutinės koreliacijos su vidutine koreliacija.
+reference[outlier_names]
+reference_mean
+# Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su 
+# kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie 0.988, todėl tai sukelia triukšmingumą duomenyse.
+
+# Dėl triukšmingumo pašalinami mėginiai: 295, 144, 18, 266, kurie neturėjo daugiau biologinių indikacijų.
+# Mėginiai šalinami poromis dėl simetriškumo.
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
+data_without_outliers <- data[,!colnames(data) %in% outlier_names]
+```
+
+Donorių moterų mėginiai suadro nedidelę dalį visų mėginių ir didžioji dalis šių mėginių sutampa su išsksirčių mėginiais (126, 175, 182, 23, 233, 245, 305, 309), todėl šie mėginiai reikšmingi tyrimui ir nešalinami. Lieka mėginiai: 295, 144, 18, 266, 198. Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų, išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje. Taip pat palygintos vidutinės išskirčių mėginių koreliacijos su vidutine koreliacija. Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie 0.988, todėl tai sukelia triukšmingumą duomenyse ir šie mėginiai buvo pašalinti.
 
 ## Klasterizavimas
 
@@ -229,13 +267,8 @@ Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafika
 ```{r clusterization 5groups, echo=FALSE, warning=FALSE}
 library(WGCNA)
 
-cor_dist_matrix <- 1 - stats::cor(data, use = "pairwise.complete.obs")
-cor_dist_matrix <- as.dist(cor_dist_matrix)
-clusters <- stats::hclust(cor_dist_matrix)
-
-# Nubraižomas klasterizavimo grafikas (be mėginių pavadinimų norint išlaikyti tvarkingumą
-# pamatyti vizualias grupes)
-plotDendroAndColors(clusters, NULL, dendroLabels = FALSE)
+cor_dist_matrix <- as.dist(1 - stats::cor(data_without_outliers, use = "pairwise.complete.obs"))
+clusters <- stats::hclust(cor_dist_matrix, method = "complete")
 
 # Dendrogramoje brėžiant liniją apytiklsiai ties viduriniu aukščiu, matomos 5 ryškiausios grupės.
 groups <- cutree(clusters, k = 5)
@@ -258,15 +291,16 @@ plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 
 Padalinus medį į šešias dalį, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas atrodo geriau, bet vis dar matoma ta pati smulki, tikriausiai išskirčių grupė kaip prieš tai.
 
-```{r clusterization 4groups, echo=FALSE, warning=FALSE}
+```{r clusterization 7groups, echo=FALSE, warning=FALSE}
 # Dėl įdomumo suskirstykime medį į mažiau grupių negu pradinis variantas - 4.
-groups <- cutree(clusters, k = 4)
+groups <- cutree(clusters, k = 7)
 colors <- c("purple","red","green","blue")
 dendogram_colors <- colors[groups]
 plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 ```
 
-Dėl įdomumo medis buvo suskirstytas negu pradinis variantas - 4. Toks suskirstymas atrodo blogas, susidaro proporcingai per didelė viena grupė. Geriausias variantas: 6 grupės.
+Dendrogramos suskirstymas į septynias grupes nepagerina situacijos, susidaro dar viena smulki išskirčių grupė (rožinė).
+Rožinei grupei priklauso mėginių pora: 198 (arti mažiausios amžiaus ribos), tačiau šis mėginys sėkmingai priskiriamas žaliai grupei, kai medis dalinamas į šešias dalis. Geriausias variantas: 6 grupės.
 
 ```{r clusterization original, echo=FALSE, warning=FALSE}
 groups <- cutree(clusters, k = 6)
@@ -280,34 +314,9 @@ outlier_group <- group_df[group_df$dendogram_colors == "orange",]
 outlier_samples <- rownames(outlier_group)
 ```
 
-Medis, padalintas į šešias dalis turi smulkią oranžinę grupę. Jai priklauso mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18. Trys iš jų sutampa su praeitu išskirčių sąrašu: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0. Klasterizavimo procesas pakartotas pašalinus oranžinės grupės mėginius.
-
-```{r clusterization wo outliers, echo=FALSE, warning=FALSE}
-# Pakartojame klasterizavimo procesą, šį kartą be išskirčių.
-data_without_outliers_new <- data[,!colnames(data) %in% outlier_samples]
-cor_dist_matrix <- 1 - stats::cor(data_without_outliers_new, use = "pairwise.complete.obs")
-cor_dist_matrix <- as.dist(cor_dist_matrix)
-clusters <- stats::hclust(cor_dist_matrix)
-
-groups <- cutree(clusters, k = 5)
-colors <- c("purple","red","green","blue","yellow")
-dendogram_colors <- colors[groups]
-plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
-```
-
-Pagal spalvų susiskirstymą gauname iš esmės tas pačias grupes, tik sukeistas vietomis ir su pasikeitusia dendrogramos struktūra. Buvo palygintas mėginių suskirstymas grupėms pašalinus oranžinės grupės mėginius ir juos palikus. Sutampa 86 mėginių paskirstymas grupėms, o 148 mėginių - nesutampa. Tačiau nėra stipraus argumento pašalinti oranžinę grupę, todėl pasiliekama prie šešių grupių dendogramos nešalinant mėginių. Tuomet atlikta mėginių klinikinių charakteristikų analizė pagal iš klasterizavimo gautas grupes.
+Medis, padalintas į šešias dalis turi smulkią oranžinę grupę. Jai priklauso mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18. Šie mėginiai pateko į išskirčių sąrašą jau anksčiau, nes šių mėginių donorės buvo moterys. Todėl šie mėginiai biologiškai reikšmingi tyrimui.
 
 ```{r clusterization clinical, echo=FALSE, warning=FALSE}
-group_df_new <- data.frame(groups, dendogram_colors)
-
-# Palyginame suskirstymą grupėmis pirmu ir antru atveju (be išskirčių).
-library(arsenal)
-summary(comparedf(group_df, group_df_new))
-
-# Gauname, kad iš viso 86 mėginių suskirtymas sutampa, o 148 mėginių nesutampa.
-# Kadangi sunku pasakyti, ar yra biologinis pagrindas pašalinti išskirčių grupę, pasiliekama prie šešių grupių dendrogramos
-# iš originalaus duomenų rinkinio.
-
 # Atrenkame mėginius iš kiekvienos grupės.
 group_one <- group_df[group_df$group == 1,]
 group_one_samples <- rownames(group_one)
@@ -329,7 +338,7 @@ group_six_samples <- rownames(group_six)
 
 # Kiekvienai grupei sudarome data frame su tos grupės klinikiniais duomenimis.
 # Būtų galima naudoti stack funkciją, tačiau R kažkodėl nulūžta po jos paleidimo.
-group_one_data <- data[,colnames(data) %in% group_one_samples]
+group_one_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_one_samples]
 group_one_df <- data.frame(
   sample_name = group_one_samples,
   diet = group_one_data$diet,
@@ -339,7 +348,7 @@ group_one_df <- data.frame(
   age = group_one_data$age
 )
 
-group_two_data <- data[,colnames(data) %in% group_two_samples]
+group_two_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_two_samples]
 group_two_df <- data.frame(
   sample_name = group_two_samples,
   diet = group_two_data$diet,
@@ -349,7 +358,7 @@ group_two_df <- data.frame(
   age = group_two_data$age
 )
 
-group_three_data <- data[,colnames(data) %in% group_three_samples]
+group_three_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_three_samples]
 group_three_df <- data.frame(
   sample_name = group_three_samples,
   diet = group_three_data$diet,
@@ -359,7 +368,7 @@ group_three_df <- data.frame(
   age = group_three_data$age
 )
 
-group_four_data <- data[,colnames(data) %in% group_four_samples]
+group_four_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_four_samples]
 group_four_df <- data.frame(
   sample_name = group_four_samples,
   diet = group_four_data$diet,
@@ -369,7 +378,7 @@ group_four_df <- data.frame(
   age = group_four_data$age
 )
 
-group_five_data <- data[,colnames(data) %in% group_five_samples]
+group_five_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_five_samples]
 group_five_df <- data.frame(
   sample_name = group_five_samples,
   diet = group_five_data$diet,
@@ -379,7 +388,7 @@ group_five_df <- data.frame(
   age = group_five_data$age
 )
 
-group_six_data <- data[,colnames(data) %in% group_six_samples]
+group_six_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_six_samples]
 group_six_df <- data.frame(
   sample_name = group_six_samples,
   diet = group_six_data$diet,
@@ -412,7 +421,7 @@ ggplot(all_groups, aes(x=group, fill=as.factor(diet))) +
   theme_minimal()
 ```
 
-Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi ketvirtoje, trečioje grupėje. Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje - žemo riebalų kiekio dieta.
+Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi trečioje, ketvirtoje, penktoje grupėje. Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje ir penktoje - žemo riebalų kiekio dieta.
 
 ```{r stimulus, echo=FALSE, warning=FALSE}
 ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
@@ -426,7 +435,7 @@ ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
   theme_minimal()
 ```
 
-Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra grupės. Nedideli skirtumai pastebimi ketvirtoje ir šeštoje grupėse. Trečioje grupėje daugiau asmenų, kurie užsiėmė fiziniu aktyvumu. Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
+Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra (beveik vienodai) grupės. Nedideli skirtumai pastebimi šeštoje grupėje, nes ten tik trys tiriamieji. Trečioje, ketvirotje grupėse daugiau asmenų, kurie užsiėmė fiziniu aktyvumu. Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
 
 ```{r timepoint, echo=FALSE, warning=FALSE}
 ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
@@ -468,7 +477,8 @@ ggplot(all_groups, aes(x=group, y=age)) +
   theme_minimal()
 ```
 
-Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai, ketvirtoje grupėje: 40 - 49 metai. Kitose grupėse amžiaus intervalai platūs: nuo 40-60 metų. Stipriausias grupių pasiskirstymas pastebimas pagal lytį, nestiprią įtaką daro dieta, fizinis aktyvumas, amžius, tačiau daugiausiai informacijos nusako DNR metilinimo pokyčiai, kurių įverčiai apsprendžia susiskirstymą į grupes.
+Penktoje grupėje amžiaus intervalas siauriausias: apie 50-56 metai. Plačiausias amžiaus intervalas trečioje grupėje: apie 35-58 metai
+Kitose grupėse amžiaus intervalai apima maždaug nuo 40(45)-60 metų.
 
 ## Heatmap
 
@@ -476,23 +486,20 @@ Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje
 
 ```{r heatmap, echo=FALSE, warning=FALSE, fig.width=10, fig.height=10}
 # Apskaičiuota variacija kiekvienai duomenų matricos eilutei.
-cg_variance <- apply(data, 1, var)
+cg_variance <- apply(data_without_outliers, 1, var)
 
 # Matrica išrikiuota mažėjimo tvarka pagal eilučių variaciją.
-cg_matrix <- data[order(cg_variance, decreasing = TRUE),]
+cg_matrix <- data_without_outliers[order(cg_variance, decreasing = TRUE),]
 
 # Heatmap su 1000 eilučių.
-cg_matrix_1000 <- cg_matrix[1:1000,]
-#heatmap(cg_matrix_1000)
+heatmap(cg_matrix[1:1000,])
 
 # Heatmap su 100 eilučių.
-cg_matrix_100 <- cg_matrix[1:100,]
-heatmap(cg_matrix_100)
+heatmap(cg_matrix[1:100,])
 
 # Heatmap su 10 eilučių.
-cg_matrix_10 <- cg_matrix[1:10,]
-heatmap(cg_matrix_10)
+heatmap(cg_matrix[1:10,])
 
 ```
 
-Pirmame heatmap'e sunku įžvelgti grupes.
+Pirmame ir antruose heatmapuose sunku įžvelgti grupes dėl didelio DNR metilinimo modifikacijų kiekio.
