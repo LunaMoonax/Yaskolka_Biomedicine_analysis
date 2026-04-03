@@ -108,9 +108,10 @@ p1 / p2 / p3 / p4
 # Norint teisingai apskaičiuoti vidutinę koreliaciją su kitais mėginiais,
 # koreliacijų matricoje turime ignoruoti mėginių koreliacijas su savimi, t.y. matricos diagonales reikšmes 1.
 # Matricos diagonalę pakeičiame nuliais, o skaičiuojant vidurkį iš eilučių kiekio atimame vieną.
+# Reference reikšmės reikalingos vėlesniems palyginimams.
 diag(cor_matrix) <- 0
 col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
-col_mean_cor
+reference <- col_mean_cor
 
 # Trečias žingsnis: atrinkti mėginius, kurių vidutinė koreliacija daugiau negu trimis standartiniais
 # nuokrypiais mažesnė už vidutinę.
@@ -118,6 +119,8 @@ mean_cor <- mean(col_mean_cor)
 sd_cor <- sd(col_mean_cor)
 outlier_names <- col_mean_cor[col_mean_cor < mean_cor - 3 * sd_cor]
 outlier_names
+
+reference_mean <- mean_cor
 
 # Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
 # Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis pridėdami 
@@ -226,7 +229,14 @@ outlier_df
 # Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų,
 # išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje.
 
+# Palyginamos mėginių vidutinės koreliacijos su vidutine koreliacija.
+reference[outlier_names]
+reference_mean
+# Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su 
+# kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie 0.988, todėl tai sukelia triukšmingumą duomenyse.
+
 # Dėl triukšmingumo pašalinami mėginiai: 295, 144, 18, 266, kurie neturėjo daugiau biologinių indikacijų.
+# Mėginiai šalinami poromis dėl simetriškumo.
 outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
                   "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
 data_without_outliers <- data[,!colnames(data) %in% outlier_names]
@@ -237,9 +247,8 @@ data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 # Ši matrica paverčiama į objektą dist, reikalingą klasterizavimo funkcijai hclust.
 library(WGCNA)
 
-cor_dist_matrix <- 1 - stats::cor(data, use = "pairwise.complete.obs")
-cor_dist_matrix <- as.dist(cor_dist_matrix)
-clusters <- stats::hclust(cor_dist_matrix)
+cor_dist_matrix <- as.dist(1 - stats::cor(data_without_outliers, use = "pairwise.complete.obs"))
+clusters <- stats::hclust(cor_dist_matrix, method = "complete")
 
 # Nubraižomas klasterizavimo grafikas (be mėginių pavadinimų norint išlaikyti tvarkingumą
 # pamatyti vizualias grupes)
@@ -263,52 +272,40 @@ colors <- c("purple","red","green","blue","yellow","orange")
 dendogram_colors <- colors[groups]
 plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 
-# Padalinus medį į šešias dalį, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas
+# Padalinus medį į šešias dalis, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas
 # atrodo geriau, bet vis dar matoma ta pati smulki, tikriausiai išskirčių grupė kaip prieš tai.
 
-# Dėl įdomumo suskirstykime medį į mažiau grupių negu pradinis variantas - 4.
-groups <- cutree(clusters, k = 4)
-colors <- c("purple","red","green","blue")
+# Dėl įdomumo suskirstykime medį į septynias grupes.
+groups <- cutree(clusters, k = 7)
+colors <- c("purple","red","green","blue","yellow","orange","pink")
 dendogram_colors <- colors[groups]
 plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 
-# Toks suskirstymas atrodo blogas, susidaro proporcingai per didelė viena grupė.
+# Toks suskirstymas nepagerina situacijos, susidaro dar viena smulki išskirčių grupė (rožinė).
+# Sudarome data frame, grupių ir mėginių peržiūrai.
+
+group_df <- data.frame(groups, dendogram_colors)
+outlier_group <- group_df[group_df$dendogram_colors == "pink",]
+outlier_samples <- rownames(outlier_group)
+outlier_samples
+
+# Rožinei grupei priklauso mėginių pora: 198 (arti mažiausios amžiaus ribos), tačiau šis mėginys 
+# sėkmingai priskiriamas žaliai grupei, kai medis dalinamas į šešias dalis.
 # Geriausias variantas: 6 grupės.
 
 groups <- cutree(clusters, k = 6)
 colors <- c("purple","red","green","blue","yellow","orange")
 dendogram_colors <- colors[groups]
 
-# Smulkiausia grupė (oranžinės spalvos), yra galimos išskirtys.
-# Sudarome data frame, grupių ir mėginių peržiūrai.
+# Smulkiausia grupė (oranžinės spalvos), taip pat yra galimos išskirtys.
 group_df <- data.frame(groups, dendogram_colors)
 outlier_group <- group_df[group_df$dendogram_colors == "orange",]
 outlier_samples <- rownames(outlier_group)
+outlier_samples
 
-# Tai mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18
-# Trys iš jų sutampa su praietu išskirčių sąrašu: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0.
-
-# Pakartojame klasterizavimo procesą, šį kartą be išskirčių.
-data_without_outliers_new <- data[,!colnames(data) %in% outlier_samples]
-cor_dist_matrix <- 1 - stats::cor(data_without_outliers_new, use = "pairwise.complete.obs")
-cor_dist_matrix <- as.dist(cor_dist_matrix)
-clusters <- stats::hclust(cor_dist_matrix)
-
-groups <- cutree(clusters, k = 5)
-colors <- c("purple","red","green","blue","yellow")
-dendogram_colors <- colors[groups]
-plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
-
-# Pagal spalvas gauname iš esmės tas pačias grupes, tik sukeistas vietomis ir su pasikeitusia dendrogramos struktūra.
-group_df_new <- data.frame(groups, dendogram_colors)
-
-# Palyginame suskirstymą grupėmis pirmu ir antru atveju (be išskirčių).
-library(arsenal)
-summary(comparedf(group_df, group_df_new))
-
-# Gauname, kad iš viso 86 mėginių suskirtymas sutampa, o 148 mėginių nesutampa.
-# Kadangi nėra svarių priežasčių pašalinti išskirčių, pasiliekama prie šešių grupių dendrogramos
-# iš originalaus duomenų rinkinio.
+# Tai mėginių poros: 175, 182, 309
+# Šie mėginiai pateko į išskirčių sąrašą jau anksčiau, nes šių mėginių donorės buvo moterys.
+# Todėl šie mėginiai biologiškai reikšmingi tyrimui.
 
 # Atrenkame mėginius iš kiekvienos grupės.
 group_one <- group_df[group_df$group == 1,]
@@ -330,7 +327,7 @@ group_six <- group_df[group_df$group == 6,]
 group_six_samples <- rownames(group_six)
 
 # Kiekvienai grupei sudarome data frame su tos grupės klinikiniais duomenimis.
-group_one_data <- data[,colnames(data) %in% group_one_samples]
+group_one_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_one_samples]
 group_one_df <- data.frame(
   sample_name = group_one_samples,
   diet = group_one_data$diet,
@@ -340,7 +337,7 @@ group_one_df <- data.frame(
   age = group_one_data$age
 )
 
-group_two_data <- data[,colnames(data) %in% group_two_samples]
+group_two_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_two_samples]
 group_two_df <- data.frame(
   sample_name = group_two_samples,
   diet = group_two_data$diet,
@@ -350,7 +347,7 @@ group_two_df <- data.frame(
   age = group_two_data$age
 )
 
-group_three_data <- data[,colnames(data) %in% group_three_samples]
+group_three_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_three_samples]
 group_three_df <- data.frame(
   sample_name = group_three_samples,
   diet = group_three_data$diet,
@@ -360,7 +357,7 @@ group_three_df <- data.frame(
   age = group_three_data$age
 )
 
-group_four_data <- data[,colnames(data) %in% group_four_samples]
+group_four_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_four_samples]
 group_four_df <- data.frame(
   sample_name = group_four_samples,
   diet = group_four_data$diet,
@@ -370,7 +367,7 @@ group_four_df <- data.frame(
   age = group_four_data$age
 )
 
-group_five_data <- data[,colnames(data) %in% group_five_samples]
+group_five_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_five_samples]
 group_five_df <- data.frame(
   sample_name = group_five_samples,
   diet = group_five_data$diet,
@@ -380,7 +377,7 @@ group_five_df <- data.frame(
   age = group_five_data$age
 )
 
-group_six_data <- data[,colnames(data) %in% group_six_samples]
+group_six_data <- data_without_outliers[,colnames(data_without_outliers) %in% group_six_samples]
 group_six_df <- data.frame(
   sample_name = group_six_samples,
   diet = group_six_data$diet,
@@ -412,8 +409,8 @@ ggplot(all_groups, aes(x=group, fill=as.factor(diet))) +
   ) +
   theme_minimal()
 
-# Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi ketvirtoje, trečioje grupėje.
-# Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje - žemo riebalų kiekio dieta.
+# Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi trečioje, ketvirtoje, penktoje grupėje.
+# Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje ir penktoje - žemo riebalų kiekio dieta.
 
 ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
   geom_bar(position = "dodge") +
@@ -425,9 +422,9 @@ ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
   ) +
   theme_minimal()
 
-# Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra grupės.
-# Nedideli skirtumai pastebimi ketvirtoje ir šeštoje grupėse.
-# Trečioje grupėje daugiau asmenų, kurie užsiėmė fiziniu aktyvumu.
+# Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra (beveik vienodai) grupės.
+# Nedideli skirtumai pastebimi šeštoje grupėje, nes ten tik trys tiriamieji.
+# Trečioje, ketvirotje grupėse daugiau asmenų, kurie užsiėmė fiziniu aktyvumu.
 # Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
 
 ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
@@ -464,17 +461,17 @@ ggplot(all_groups, aes(x=group, y=age)) +
   ) +
   theme_minimal()
 
-# Penktoje ir šeštoje grupėje amžiaus intervalai siauriausi, penktoje grupėje apie 50-56 metai,
-# ketvirtoje grupėje: 40 - 49 metai.
-# Kitose grupėse amžiaus intervalai platūs: nuo 40-60 metų.
+# Penktoje grupėje amžiaus intervalas siauriausias: apie 50-56 metai,
+# Plačiausias amžiaus intervalas trečioje grupėje: apie 35-58 metai
+# Kitose grupėse amžiaus intervalai apima maždaug nuo 40(45)-60 metų.
 
 # Heatmap
 
 # Apskaičiuota variacija kiekvienai duomenų matricos eilutei.
-cg_variance <- apply(data, 1, var)
+cg_variance <- apply(data_without_outliers, 1, var)
 
 # Matrica išrikiuota mažėjimo tvarka pagal eilučių variaciją.
-cg_matrix <- data[order(cg_variance, decreasing = TRUE),]
+cg_matrix <- data_without_outliers[order(cg_variance, decreasing = TRUE),]
 
 # Heatmap su 1000 eilučių.
 heatmap(cg_matrix[1:1000,])
