@@ -123,7 +123,7 @@ outlier_names
 reference_mean <- mean_cor
 
 # Gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0
-# Susikuriame laikiną duomenų lentelę su pašalintomis išimtimis pridėdami 
+# Susikuriame laikiną duomenų lentelę su pašalintomis išskirtimis pridėdami 
 # atitinkamus papildomus mėginius pagal mėginio paėmimo laikotarpį.
 outlier_names = c("182_CENTRAL_T0","182_CENTRAL_T18","198_CENTRAL_T0","198_CENTRAL_T18",
                   "23_CENTRAL_T0","23_CENTRAL_T18","245_CENTRAL_T0", "245_CENTRAL_T18")
@@ -461,9 +461,9 @@ ggplot(all_groups, aes(x=group, y=age)) +
   ) +
   theme_minimal()
 
-# Penktoje grupėje amžiaus intervalas siauriausias: apie 50-56 metai,
-# Plačiausias amžiaus intervalas trečioje grupėje: apie 35-58 metai
-# Kitose grupėse amžiaus intervalai apima maždaug nuo 40(45)-60 metų.
+# Penktoje grupėje kvartilinis amžiaus intervalas siauriausias: apie 50-56 metai,
+# Plačiausias kvartilinis amžiaus intervalas trečioje grupėje: apie 35-58 metai
+# Kitose grupėse kvartiliniai amžiaus intervalai apima maždaug nuo 40(45)-60 metų.
 
 # Heatmap
 
