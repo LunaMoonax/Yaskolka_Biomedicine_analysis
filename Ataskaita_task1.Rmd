@@ -22,12 +22,12 @@ library(knitr)
 
 **Panaudotos analizės**: įvertinta ląstelių kompozicija remiantis Houseman approach, o skirtumai analizuoti Vilkoksono testu. Norint identifikuoti skirtumus diferentiškai metilintuose regionuose (DMR) tarp T0 ir T18 grupių naudotasi DMR ieškotoju ‘metilene’. Atrinkti DMR regionai buvo anotuojami. Tarpusavyje palygintos grupės: T0 ir T18, fizinio aktyvumo (ne)buvimas, mažesnio riebalų/angliavandenių kiekių dietos. Atlikta CpG analizė dmpFinder įrankiu. Kolmogorv-Smirnov testas buvo atliktas norint palyginti DNR metilinimo pokyčius tarp top 10 geriausius ir 10 blogiausius rezultatus pademonstravusių tiriamųjų. Spearmano ir Pearsono koreliacijos testai buvo atlikti norint susieti CpG saleles su sėkmingais kūno masės mažinimo rezultatais. Epigenome-wide association study (EWAS) buvo atlikta reliatyviam kūno masės sumažėjimui naudojantis CMplot. Naudojantis ROC kreivės modeliu nustatytas bazinis metilinimo įvertis. Fenotipų koreliacija T0 ir T18 grupėms su baziniais metilinimo lygiais (identifikuotų CpG salelių, DMR) buvo nustatyta remiantis Pearsono ir Spearmano koreliacijos testais. Identifikuotos DMR, CpG salelės susietos su atitinkamais chromatino segmentais naudojantis Epigenomic Roadmap. Atlikta genų ontologijos analizė.
 
-**Rezultatai**: nustatyti reikšmingi DNR metilinimo pakitimai tarp asmenų, kuriems pavyko sėkmingai pavyko numesti svorio, ir asmenų, kurie susidūrė su sunkumais metant svorį, genuose CRISP2, SLC6A12, SLFN12, AURKC (padidėjęs metilinimo lygis pirmojoje grupėje) ir LRRC27, RNF39, LINC00539, NTSR1 (sumažėjęs metilinimo lygis pirmojoje grupėje).  SLC6A12 metilinimo lygis buvo stipriausiai pakitęs tarp šių grupių. Kai kurie genai siejami su ląstelių adhezija, kalcio jonų prisijungimu (pagal genų ontologijos analizę). Su kūno svorio mažinimo intervencijomis siejami metilinimo pakitimai CpG regionuose, kurie dengia miR-6723 bei MTND1P23 ir MTND1928 pseudogenus. Nustatyta 15 neigiamai su kūno masės pokyčiais koreliuotų CpG salelių, pavyzdžiui, genuose NUDT3 ir NCOR2, ir 32 teigiamai koreliuotos CpG salelės. Stipriausi CpG salelių metilinimo efektai pastebėti netoli MAPKAP1, HM13, KIAA0513 genų lokusų. DMR regionas nuo introno 3 iki 4 egzono geno RNF39 koreliavo su HOMA indeksu ir gliukozės lygiais 17 dengiančių šiam regionui CpG salelių. Didžioji dalis šių salelių buvo neigiamai koreliuotos su adiponektino serumo lygiais bei teigiamai su KMI po intervencijos. DNR metilinimo įvertis reikšmingesnis faktorius prognozuojant sėkmingą svorio mažinimą negu amžius ir KMI.
+**Rezultatai**: nustatyti reikšmingi DNR metilinimo pakitimai tarp asmenų, kuriems sėkmingai pavyko numesti svorio, ir asmenų, kurie susidūrė su sunkumais metant svorį, genuose CRISP2, SLC6A12, SLFN12, AURKC (padidėjęs metilinimo lygis pirmojoje grupėje) ir LRRC27, RNF39, LINC00539, NTSR1 (sumažėjęs metilinimo lygis pirmojoje grupėje).  SLC6A12 metilinimo lygis buvo stipriausiai pakitęs tarp šių grupių. Kai kurie genai siejami su ląstelių adhezija, kalcio jonų prisijungimu (pagal genų ontologijos analizę). Su kūno svorio mažinimo intervencijomis siejami metilinimo pakitimai CpG regionuose, kurie dengia miR-6723 bei MTND1P23 ir MTND1928 pseudogenus. Nustatyta 15 neigiamai su kūno masės pokyčiais koreliuotų CpG salelių, pavyzdžiui, genuose NUDT3 ir NCOR2, ir 32 teigiamai koreliuotos CpG salelės. Stipriausi CpG salelių metilinimo efektai pastebėti netoli MAPKAP1, HM13, KIAA0513 genų lokusų. DMR regionas nuo introno 3 iki 4 egzono geno RNF39 koreliavo su HOMA indeksu ir gliukozės lygiais 17 dengiančių šiam regionui CpG salelių. Didžioji dalis šių salelių buvo neigiamai koreliuotos su adiponektino serumo lygiais bei teigiamai su KMI po intervencijos. DNR metilinimo įvertis reikšmingesnis faktorius prognozuojant sėkmingą svorio mažinimą negu amžius ir KMI.
 
 **Išvados**: 18 mėnesių trunkanti svorio mažinimo programa susijusi su DNR metilinimo pasikeitimais. DNR metilinimas gali tapti potencialu biomarkeriu įvertinant kūno masės mažinimo programos sėkmingumą ir pritaikant specifinį planą asmeniui.
 
 
-```{r graphs, echo=FALSE, warning=FALSE}
+```{r graphs, echo=FALSE, warning=FALSE, message=FALSE}
 #setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
 setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
@@ -37,6 +37,8 @@ library(dplyr)
 library(patchwork)
 
 data <- readRDS("yaskolka.rds")
+
+showtext_auto()
 
 # Kokybės kontrolė #1
 
@@ -121,7 +123,7 @@ Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis n
 **Metodas**: Išskirčių paieškai naudojamas Inter-Array Correlation metodas. Pirmiausia, buvo sudaryta koreliacijų matrica.
 Kiekvienam mėginiui buvo apskaičiuota vidutinė koreliacija su kitais mėginiais. Tuomet atrinkti mėginiai, kurių vidutinė koreliacija daugiau negu trimis standartiniais nuokrypiais mažesnė už vidutinę. Iš viso atliktos trys šio metodo iteracijos kiekvieną kartą pašalinant atrastus "išskirčių" mėginius (poromis).
 
-```{r outlier graph, echo=FALSE, warning=FALSE}
+```{r outlier graph, echo=FALSE, warning=FALSE, message=FALSE}
 diag(cor_matrix) <- 0
 col_mean_cor <- colSums(cor_matrix) / (nrow(cor_matrix) - 1)
 reference <- col_mean_cor
@@ -212,14 +214,15 @@ p5
 # Dėl to atsiranda triukšmingumas duomenyse, bet pagal išskirčių pasiskirstymo formas, neatrodo, kad yra techninių klaidų.
 ```
 
-Po pirmosios iteracijos gautos išskirtys: 182_CENTRALT0, 198_CENTRAL_T0, 23_CENTRAL_T18, 245_CENTRAL_T0.
-Po antrosios iteracijos gautos išskirtys: 144_CENTRAL_T0, 175_CENTRAL_T0, 18_CENTRAL_T0, 18_CENTRAL_T18, 266_CENTRAL_T18, 233_CENTRAL_T18.
-Po trečiosios iteracijos gautos išskirtys: 126_CENTRAL_T0, 295_CENTRAL_T0, 305_CENTRAL_T18, 305_CENTRAL_T18, 309_CENTRAL_T0.
+Po pirmosios iteracijos gautos išskirtys: 182_T0, 198_T0, 23_T18, 245_T0.
+Po antrosios iteracijos gautos išskirtys: 144_T0, 175_T0, 18_T0, 18_T18, 266_T18, 233_T18.
+Po trečiosios iteracijos gautos išskirtys: 126_T0, 295_T0, 305_T18, 305_T18, 309_T0.
 Žinant gautų išskirčių mėginių pavadinimus, buvo sudaryta išskirčių duomenų lentelė ir duomenų lentelė, kurioje nėra išskirčių. Visoms išskirtims buvo pavaizduotas beta reikšmių tankis ir buvo pavaizduotas vidutinis beta reikšmių tankis be išskirčių (juoda linija).
 
-Iš beta reikšmių tankio grafikų matome, jog visi išskirčių tankio grafikai yra vienodai pasiskirstę, nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija). Kadangi nėra stiprių skirtumų tankio grafikų formose, nėra pagrindo šalinti biologinių išskirčių.
+Tankio grafikai yra vienodai pasiskirstę, nestipriai skiriasi tik išskirčių pikų aukščiai nuo vidutinio pasiskirstymo be išskirčių (juoda linija). Dėl to atsiranda triukšmingumas duomenyse, bet pagal išskirčių pasiskirstymo formas, neatrodo, kad yra techninių klaidų.
+Apačioje pavaizduota išskirčių mėginių klinikinių duomenų lentelė.
 
-```{r outlier data, echo=FALSE, warning=FALSE}
+```{r outlier data, echo=FALSE, warning=FALSE, message=FALSE}
 
 # Išskirčių klinikinių duomenų lentelė.
 outlier_df <- data.frame(
@@ -239,32 +242,37 @@ female_samples <- data$id[as.character(data$sex) == "F"]
 
 # Likę išskirčių mėginiai: 295, 144, 18, 266, 198.
 
-summary(data$age)
-outlier_df
 
+#summary(data$age)
+knitr::kable(outlier_df)
+```
+
+Donorių moterų mėginiai suadro nedidelę dalį visų mėginių ir didžioji dalis šių mėginių sutampa su išskirčių mėginiais (126, 175, 182, 23, 233, 245, 305, 309), todėl šie mėginiai reikšmingi tyrimui ir nešalinami. Lieka mėginiai: 295, 144, 18, 266, 198. Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų [28.75; 70.89], išskyrus mėginio 198, kur tiriamojo amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje. 
+
+```{r outlier cor, echo=FALSE, warning=FALSE, message=FALSE}
 # Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų,
 # išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje.
 
 # Palyginamos mėginių vidutinės koreliacijos su vidutine koreliacija.
-reference[outlier_names]
-reference_mean
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
+knitr::kable(reference[outlier_names])
+#reference_mean
 # Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su 
 # kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie 0.988, todėl tai sukelia triukšmingumą duomenyse.
 
 # Dėl triukšmingumo pašalinami mėginiai: 295, 144, 18, 266, kurie neturėjo daugiau biologinių indikacijų.
 # Mėginiai šalinami poromis dėl simetriškumo.
-outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
-                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
 data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 ```
 
-Donorių moterų mėginiai suadro nedidelę dalį visų mėginių ir didžioji dalis šių mėginių sutampa su išsksirčių mėginiais (126, 175, 182, 23, 233, 245, 305, 309), todėl šie mėginiai reikšmingi tyrimui ir nešalinami. Lieka mėginiai: 295, 144, 18, 266, 198. Peržvelgus likusių išskirčių mėginių donorų amžius matyti, kad didžioji dalis asmenų nėra arti tyrimo amžiaus ribų, išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje. Taip pat palygintos vidutinės išskirčių mėginių koreliacijos su vidutine koreliacija. Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie 0.988, todėl tai sukelia triukšmingumą duomenyse ir šie mėginiai buvo pašalinti.
+Lieka nuspręsti dėl mėginių: 295, 144, 18, 266. Palygintos vidutinės išskirčių mėginių koreliacijos su vidutine koreliacija. Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su kitais mėginiais apie 0.982 - 0.983, o vidutinė koreliacijos reikšmė yra apie  0.9875237, todėl tai sukelia triukšmingumą duomenyse ir šie mėginiai buvo pašalinti, nes neturėjo daugiau biologinių indikacijų.
 
 ## Klasterizavimas
 
-**Metodas**: Klasterizavimui sudaryta mėginių atstumų matrica, atstumą skaičiuojant kaip 1 - cor (koreliacija). Naudotas hierarchinis klasterizavimo metodas. Gautas medis buvo dalinamas kelis kartus į skirtingą kiekį grupių, norint sužinoti kur pasiskirstymas grupėmis yra tolygiausias ir proporcingiausias.
+**Metodas**: Klasterizavimui sudaryta atstumų tarp mėginių matrica, atstumą skaičiuojant kaip 1 - cor (koreliacija). Naudotas hierarchinis klasterizavimo metodas. Gautas medis buvo dalinamas kelis kartus į skirtingą kiekį grupių, norint sužinoti kuris pasiskirstymas grupėmis yra tolygiausias ir proporcingiausias.
 
-```{r clusterization 5groups, echo=FALSE, warning=FALSE}
+```{r clusterization 5groups, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 library(WGCNA)
 
 cor_dist_matrix <- as.dist(1 - stats::cor(data_without_outliers, use = "pairwise.complete.obs"))
@@ -280,9 +288,9 @@ dendogram_colors <- colors[groups]
 plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 ```
 
-Medis padalintas į penkias dalis. Gaunasi viena labai didelė grupė, trys smulkesnės grupės, ir viena labai maža grupė, kuri gali rodyti išskirtis. Padaliname medį į daugiau dalių, norint gauti grupes, kurios mažiau besiskiria savo dydžiu. Procesas pakartotas.
+Medis padalintas į penkias dalis. Gaunasi viena labai didelė grupė, trys smulkesnės grupės, ir viena labai maža grupė, kuri gali rodyti išskirtis. Padaliname medį į daugiau dalių, norint gauti grupes, kurios mažiau skiriasi savo dydžiu.
 
-```{r clusterization 6groups, echo=FALSE, warning=FALSE}
+```{r clusterization 6groups, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 groups <- cutree(clusters, k = 6)
 colors <- c("purple","red","green","blue","yellow","orange")
 dendogram_colors <- colors[groups]
@@ -291,10 +299,10 @@ plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 
 Padalinus medį į šešias dalį, šiek tiek sumažėjo skirtumas tarp grupių dydžių, todėl toks suskirstymas atrodo geriau, bet vis dar matoma ta pati smulki, tikriausiai išskirčių grupė kaip prieš tai.
 
-```{r clusterization 7groups, echo=FALSE, warning=FALSE}
+```{r clusterization 7groups, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 # Dėl įdomumo suskirstykime medį į mažiau grupių negu pradinis variantas - 4.
 groups <- cutree(clusters, k = 7)
-colors <- c("purple","red","green","blue")
+colors <- c("purple","red","green","blue","yellow","orange","pink")
 dendogram_colors <- colors[groups]
 plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 ```
@@ -302,7 +310,7 @@ plotDendroAndColors(clusters, dendogram_colors, dendroLabels = FALSE)
 Dendrogramos suskirstymas į septynias grupes nepagerina situacijos, susidaro dar viena smulki išskirčių grupė (rožinė).
 Rožinei grupei priklauso mėginių pora: 198 (arti mažiausios amžiaus ribos), tačiau šis mėginys sėkmingai priskiriamas žaliai grupei, kai medis dalinamas į šešias dalis. Geriausias variantas: 6 grupės.
 
-```{r clusterization original, echo=FALSE, warning=FALSE}
+```{r clusterization original, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 groups <- cutree(clusters, k = 6)
 colors <- c("purple","red","green","blue","yellow","orange")
 dendogram_colors <- colors[groups]
@@ -314,9 +322,9 @@ outlier_group <- group_df[group_df$dendogram_colors == "orange",]
 outlier_samples <- rownames(outlier_group)
 ```
 
-Medis, padalintas į šešias dalis turi smulkią oranžinę grupę. Jai priklauso mėginiai: 175_CENTRAL_T0, 175_CENTRAL_T18, 182_CENTRAL_T0, 182_CENTRAL_T18, 309_CENTRAL_T0, 309_CENTRAL_T18. Šie mėginiai pateko į išskirčių sąrašą jau anksčiau, nes šių mėginių donorės buvo moterys. Todėl šie mėginiai biologiškai reikšmingi tyrimui.
+Medis, padalintas į šešias dalis turi smulkią oranžinę grupę. Jai priklauso mėginiai: 175_T0, 175_T18, 182_T0, 182_T18, 309_T0, 309_T18. Šie mėginiai pateko į išskirčių sąrašą jau anksčiau, nes šių mėginių donorės buvo moterys. Todėl šie mėginiai biologiškai reikšmingi tyrimui ir nešalinami.
 
-```{r clusterization clinical, echo=FALSE, warning=FALSE}
+```{r clusterization clinical, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 # Atrenkame mėginius iš kiekvienos grupės.
 group_one <- group_df[group_df$group == 1,]
 group_one_samples <- rownames(group_one)
@@ -421,9 +429,9 @@ ggplot(all_groups, aes(x=group, fill=as.factor(diet))) +
   theme_minimal()
 ```
 
-Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi trečioje, ketvirtoje, penktoje grupėje. Ketvirtoje grupėje daugiau besimaitinusių žemo angliavandenių kiekio dieta, o trečioje ir penktoje - žemo riebalų kiekio dieta.
+Pasiskirstymas grupėse tarp dietų labai panašus, ryškesni skirtumai matomi trečioje, ketvirtoje, penktoje grupėse. Ketvirtoje grupėje daugiau tiriamųjų, kurie laikėsi žemo angliavandenių kiekio dietos, o trečioje ir penktoje - žemo riebalų kiekio dietos.
 
-```{r stimulus, echo=FALSE, warning=FALSE}
+```{r stimulus, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
   geom_bar(position = "dodge") +
   labs(
@@ -435,9 +443,9 @@ ggplot(all_groups, aes(x=group, fill=as.factor(stimulus))) +
   theme_minimal()
 ```
 
-Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra (beveik vienodai) grupės. Nedideli skirtumai pastebimi šeštoje grupėje, nes ten tik trys tiriamieji. Trečioje, ketvirotje grupėse daugiau asmenų, kurie užsiėmė fiziniu aktyvumu. Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
+Pagal fizinio aktyvumo buvimą/nebuvimą vienodai pasiskirsčiusios pirma ir antra (beveik vienodai) grupės. Nedideli skirtumai pastebimi šeštoje grupėje, nes ten tik trys tiriamieji. Trečioje, ketvirtoje grupėse daugiau asmenų, kurie užsiėmė fiziniu aktyvumu. Penktoje grupėje vien tik asmenys, kurie nebuvo fiziškai aktyvūs.
 
-```{r timepoint, echo=FALSE, warning=FALSE}
+```{r timepoint, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
   geom_bar(position = "dodge") +
   labs(
@@ -451,7 +459,7 @@ ggplot(all_groups, aes(x=group, fill=as.factor(timepoint))) +
 
 Visose grupėse mėginiai pasiskirstę vienodai pagal mėginių paėmimo laikotarpius.
 
-```{r gender, echo=FALSE, warning=FALSE}
+```{r gender, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 ggplot(all_groups, aes(x=group, fill=as.factor(sex))) +
   geom_bar(position = "dodge") +
   labs(
@@ -466,7 +474,7 @@ ggplot(all_groups, aes(x=group, fill=as.factor(sex))) +
 
 Pirmoje, antroje, trečioje, ketvirtoje grupėse vien tik vyrai. Penktoje ir šeštoje grupėje vien tik moterys.
 
-```{r age, echo=FALSE, warning=FALSE}
+```{r age, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
 ggplot(all_groups, aes(x=group, y=age)) +
   geom_boxplot(position = "dodge") +
   labs(
@@ -477,14 +485,15 @@ ggplot(all_groups, aes(x=group, y=age)) +
   theme_minimal()
 ```
 
-Penktoje grupėje amžiaus intervalas siauriausias: apie 50-56 metai. Plačiausias amžiaus intervalas trečioje grupėje: apie 35-58 metai
-Kitose grupėse amžiaus intervalai apima maždaug nuo 40(45)-60 metų.
+Penktoje grupėje amžiaus kvartilinis intervalas siauriausias: apie 50-56 metai. Plačiausias amžiaus kvartilinis intervalas trečioje grupėje: apie 35-58 metai. Pirmos, antros ir šeštos grupės amžiaus kvartiliniai intervalai panašūs: apie 42-58 metus. Antros, trečios ir šeštos grupės amžiaus medianos panašios 45-47 metai. Pirmos grupės mediana panaši į penktos grupės medianą: apie 52 metus.
+
+Taigi, ryškiausiai skirtumai tarp grupių stebimi pagal lytį, mažesni skirtumai - pagal dietą, fizinį aktyvumą, amžių.
 
 ## Heatmap
 
-**Metodas**: norint sudaryti heatmap, reikėjo atsirinkti fiksuotą skaičių cg pozicijų. Todėl buvo apskaičiuota kiekvienos cg pozicijos variacija, o pačios cg pozicijos surikiuotos pagal variacijos mažėjimą. Paimta 1000, 100, 10 labiausiai varijuojančių cg pozicijų bei sudaryti trys heat'mapai.
+**Metodas**: norint sudaryti heatmap, reikėjo atsirinkti fiksuotą skaičių metilinimo pozicijų. Todėl buvo apskaičiuota kiekvienos cg pozicijos metilinimo lygio variacija, o pačios cg pozicijos surikiuotos pagal metilinimo variacijos mažėjimą. Paimta 1000, 100, 10 labiausiai varijuojančių cg pozicijų pagal metilinimą bei sudaryti trys heatmap'ai.
 
-```{r heatmap, echo=FALSE, warning=FALSE, fig.width=10, fig.height=10}
+```{r heatmap1, echo=FALSE, warning=FALSE, fig.width=10, fig.height=10}
 # Apskaičiuota variacija kiekvienai duomenų matricos eilutei.
 cg_variance <- apply(data_without_outliers, 1, var)
 
@@ -493,13 +502,21 @@ cg_matrix <- data_without_outliers[order(cg_variance, decreasing = TRUE),]
 
 # Heatmap su 1000 eilučių.
 heatmap(cg_matrix[1:1000,])
+```
 
+Pirmajame heatmap'e su daugiausiai cg pozicijų sunku įžvelgti susidariusias grupes tarp cg ar mėginių (susigrupavusias spalvas). Didesni skirtumai gali būti įžvelgiami ties heatmap viduriu pozicijose cg17480035, cg24470466, cg23564471, kur matomi stipresni metilinimo skirtumai tarp mėginių negu kitose cg pozicijose.
+
+```{r heatmap2, echo=FALSE, warning=FALSE, fig.width=10, fig.height=10}
 # Heatmap su 100 eilučių.
 heatmap(cg_matrix[1:100,])
+```
 
+Heatmap'e su 100 cg pozicijų taip pat nepastebima metilinimo intensyvumo susigrupavimų, metilinimo intensyvumas kiekvienoje cg pozicijoje išsibarstęs pagal mėginius. Mažesni metilinimo skirtumai negu kitose pozicijose pastebimi šiose vietose: cg06688803, cg26287822, cg13653328 bei cg15250633.
+
+```{r heatmap3, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
 # Heatmap su 10 eilučių.
 heatmap(cg_matrix[1:10,])
 
 ```
 
-Pirmame ir antruose heatmapuose sunku įžvelgti grupes dėl didelio DNR metilinimo modifikacijų kiekio.
+Visuose 10 pavaizduotų cg pozicijų stebimi dideli metilinimo kontrastai tarp mėginių, ypač dideli skirtumai matomi pozicijoje cg2413987. Mėginių metilinimo intensyvumas nestipriai grupuojasi tarp skirtingų cg pozicijų, bet galima pastebėti tam tikras grupes: metilinimas susitiprėjęs mėginiuose 181_T0, 198_T0, 315_T0, pozicijose: cg02006792, cg08146708, cg06616511, cg14755254, cg18218696 arba mėginiuose 276_T0, 89_T18, 116_T0, 97_T18, 315_T0. Grupavimasis taip pat stebimas apatiniame dešiniajame kampe pozicijose cg08223187, cg02006792, cg06616511.

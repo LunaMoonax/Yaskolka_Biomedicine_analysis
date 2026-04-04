@@ -230,6 +230,8 @@ outlier_df
 # išskyrus mėginio 198, kur amžius yra 30.12 - 31.62, arti mažiausio amžiaus ribos 28.75, todėl šis mėginys paliekamas duomenų rinkinyje.
 
 # Palyginamos mėginių vidutinės koreliacijos su vidutine koreliacija.
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
 reference[outlier_names]
 reference_mean
 # Išskirtys, tokios kaip: 295_T0, 295_T18, 144_T0, 18_T0, 18_T18, 266_T18, turi vidutinę koreliaciją su 
@@ -237,8 +239,6 @@ reference_mean
 
 # Dėl triukšmingumo pašalinami mėginiai: 295, 144, 18, 266, kurie neturėjo daugiau biologinių indikacijų.
 # Mėginiai šalinami poromis dėl simetriškumo.
-outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
-                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
 data_without_outliers <- data[,!colnames(data) %in% outlier_names]
 
 # Klasterizavimas
