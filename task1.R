@@ -2,7 +2,7 @@
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
 setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -11,32 +11,96 @@ library(patchwork)
 
 data <- readRDS("yaskolka.rds")
 
+# Duomenų aprašymas
+
+# Pasinaudojant lentelėmis ir grafikais, nagrinėsime duotus duomenis siekiant juos aprašyti.
+
+# naudodami metaduomenis (colanns) ir CpG anotacijas (rowanns)
+meta <- colanns(data)
+probe_ann <- rowanns(data)
+
+# Bendras mėginių skaičius
+cat("Mėginių skaičius:", nrow(meta), "\n")
+
+# Unikalių donorų skaičius (pašaliname pasikartojimus dėl dviejų laiko taškų)
+donors <- meta[!duplicated(meta$donor), ]
+cat("Unikalių donorų skaičius:", nrow(donors), "\n")
+
+# Lyčių pasiskirstymas tarp donorų
+cat("Lyčių pasiskirstymas (M - vyrai, F - moterys):")
+table(donors$sex)
+
+# Amžiaus vidurkis
+meta_t0 <- meta[meta$timepoint == 0, ]
+cat("Amžiaus vidurkis:", mean(meta_t0$age), "\n")
+
+# Amžiaus pasiskirstymas pagal lytį
+ggplot(meta_t0, aes(x = age, fill = sex)) +
+  geom_histogram(bins = 12, alpha = 0.7) +
+  facet_wrap(~sex, scales = "free_y") +
+  scale_fill_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "Donorų amžiaus pasiskirstymas pagal lytį",
+       x = "Amžius (metai)", y = "Skaičius") +
+  theme_minimal()
+
+# Mėginių skaičius pagal intervencijos grupę
+ggplot(meta_t0, aes(x = diet, fill = stimulus)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Donorų pasiskirstymas pagal dietą ir fizinį aktyvumą",
+       x = "Dieta", y = "Donorų skaičius", fill = "Fizinis aktyvumas") +
+  theme_minimal()
+
+# Bendras matuotų CpG pozicijų skaičius 
+cat("CpG pozicijų skaičius:", nrow(probe_ann), "\n")
+
+# Iš duomenų lentelės išrinksime kiek CpG pozicijų yra kiekvienoje chromosomoje
+chr_counts <- table(probe_ann$chr)
+chr_df <- data.frame(chr = names(chr_counts), count = as.numeric(chr_counts))
+# Surikiuojame chromosomas
+chr_df$chr <- factor(chr_df$chr, levels = paste0("chr", c(1:22, "X", "Y")))
+chr_df <- chr_df[!is.na(chr_df$chr), ]
+
+# CpG pasiskirstymas tarp chromosomų
+ggplot(chr_df, aes(x = chr, y = count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "CpG pozicijų pasiskirstymas tarp chromosomų",
+       x = "Chromosoma", y = "CpG skaičius") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Patikriname, ar rinkinyje yra daugiau nei vienas audinio tipas ar diagnozė
+# Ląstelės tipai
+cat("Ląstelės tipai:")
+table(meta$celltype)
+
+# Diagnozės tipai
+cat("Diagnozės tipai:")
+table(meta$diagnosis)
+
 # Kokybės kontrolė #1
 
-# Annmatrix reikšmių peržiūra
-rowanns(data)
-colanns(data)
-
-# Peržiūrime CpG salų reikšmes
-data@relation_to_island
+# Tikriname, ar beta reikšmių pasiskirstymas atitinka biologiškai tikėtiną modelį:
+# - CpG salose (Island) metilinimo lygis turėtų būti žemas,
+# - atvirose jūros srityse (OpenSea) — aukštas,
+# - pakrančių (Shore) ir šelfų (Shelf) regionuose — tarpinis.
 
 # Suskaičiuojame metilinimo lygių (beta) vidutines reikšmes eilutėms
 mean_beta <- rowMeans(data, na.rm = TRUE)
 
-# Sukuriame dataframe, kuri bus naudojama grafike
+# Sukuriame dataframe, kuris bus naudojama grafike
 df <- data.frame(
   mean_beta = mean_beta,
   region = data@relation_to_island
 )
 
-# Suskirstome relation_to_island reikšmes 4 grupes, kurios mums yra reikalingos kokybės kontrolei patvirtinti
+# Suskirstome relation_to_island reikšmes į 4 grupes, kurios mums yra reikalingos kokybės kontrolei patvirtinti
 df$region_grouped <- case_when(
   df$region == "Island" ~ "Island",
   df$region == "OpenSea" ~ "OpenSea",
   df$region %in% c("N_Shelf", "S_Shelf") ~ "Shelf",
   df$region %in% c("N_Shore", "S_Shore") ~ "Shore"
 )
-# Sugrupuojame lygiais, kad grafike būtų atvaizduota mums reikalinga tvarka
+# Sugrupuojame, kad grafike būtų atvaizduota mums reikalinga tvarka
 df$region_grouped <- factor(df$region_grouped, levels = c("Island", "Shore", "Shelf", "OpenSea"))
 
 # Piešiame grafiką
@@ -58,6 +122,9 @@ ggplot(df, aes(x = mean_beta, color = region_grouped)) +
 
 # Kokybės kontrolė #2
 
+# Tikriname, ar mėginiai, priklausantys tai pačiai biologinei grupei, yra panašesni
+# tarpusavyje nei mėginiai iš skirtingų grupių.
+
 # Apskaičiuojame koreliacijas
 cor_matrix <- cor(data, use = "pairwise.complete.obs")
 
@@ -78,7 +145,7 @@ df <- data.frame(
   stimulus_same = ifelse(sample_ann$stimulus[lower[,1]] == sample_ann$stimulus[lower[,2]], "Grupės viduje", "Tarp grupių")
 )
 
-# Sukuriame visų analizuojamų grupių grafikai
+# Sukuriame visų analizuojamų grupių grafikus
 p1 <- ggplot(df, aes(x = cor, color = sex_same)) + geom_density(linewidth = 1) +
   labs(title = "Lytis", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
 
@@ -481,3 +548,126 @@ heatmap(cg_matrix[1:100,])
 
 # Heatmap su 10 eilučių.
 heatmap(cg_matrix[1:10,])
+
+# Apžvalginė analizė
+
+# PCA — Pagrindinių komponenčių analizė
+# Atliekame PCA, kad nustatytume, kokie faktoriai labiausiai lemia mėginių metilinimo variaciją.
+
+# Ttransponuojame matricą (t), nes PCA tikisi mėginius eilutėse, o CpG stulpeliuose
+pca <- prcomp(t(data_without_outliers), center = TRUE, scale. = FALSE)
+
+# Sukuriame data.frame su pirmosiomis trimis komponentėmis ir klinikiniais duomenimis
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  PC3 = pca$x[,3],
+  colanns(data_without_outliers)
+)
+
+# Apskaičiuojame, kiek variacijos (%) paaiškina kiekviena komponentė
+variance_explained <- summary(pca)$importance[2, 1:5] * 100
+cat("Variacijos dalis (%), kurią paaiškina pirmosios 5 komponentės:\n")
+print(round(variance_explained, 2))
+
+# Grafikas pagal lytį
+p_sex <- ggplot(pca_df, aes(x = PC1, y = PC2, color = sex)) +
+  geom_point(size = 2, alpha = 0.7) +
+  scale_color_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "Lytis",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal laiko tašką (T0 vs T18)
+p_time <- ggplot(pca_df, aes(x = PC1, y = PC2, color = as.factor(timepoint))) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Laiko taškas", color = "Timepoint",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal dietos tipą
+p_diet <- ggplot(pca_df, aes(x = PC1, y = PC2, color = diet)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Dieta",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal fizinį aktyvumą
+p_stim <- ggplot(pca_df, aes(x = PC1, y = PC2, color = stimulus)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Fizinis aktyvumas",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Sudedame visus keturis grafikus į vieną paveikslą
+(p_sex | p_time) / (p_diet | p_stim)
+
+# Žiūrime PC3, ar joje matosi kiti faktoriai
+ggplot(pca_df, aes(x = PC1, y = PC3, color = sex)) +
+  geom_point(size = 2, alpha = 0.7) +
+  scale_color_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "PCA: PC1 vs PC3, spalvinta pagal lytį",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC3 (", round(variance_explained[3], 1), "%)")) +
+  theme_minimal()
+
+# Metilinimo pokytis tarp T0 ir T18
+# Kiekvienam donorui apskaičiuojame metilinimo pokytį (T18 - T0)
+# kiekvienoje CpG pozicijoje. Tada žiūrime, kurios pozicijos vidutiniškai
+# pakito labiausiai per visus donorus.
+
+# Pasiimame mėginių metaduomenis
+meta_clean <- colanns(data_without_outliers)
+
+# Išskiriame T0 ir T18 donorus
+t0_donors <- meta_clean$donor[meta_clean$timepoint == 0]
+t18_donors <- meta_clean$donor[meta_clean$timepoint == 18]
+
+# Surandame donorus, kurie turi abu laiko taškus
+common_donors <- intersect(t0_donors, t18_donors)
+
+# Surandame stulpelių indeksus atitinkamiems T0 ir T18 mėginiams
+t0_idx <- match(paste0(common_donors, "_T0"), colnames(data_without_outliers))
+t18_idx <- match(paste0(common_donors, "_T18"), colnames(data_without_outliers))
+
+# Skaičiuojame vidutinį delta beta (T18 - T0) kiekvienai CpG pozicijai per visus donorus
+delta_beta <- rowMeans(data_without_outliers[, t18_idx] - data_without_outliers[, t0_idx], na.rm = TRUE)
+
+# Vizualizuojame delta beta pasiskirstymą — tikimės, kad dauguma pokyčių bus arti 0
+df_delta <- data.frame(delta = delta_beta)
+
+ggplot(df_delta, aes(x = delta)) +
+  geom_histogram(bins = 100, fill = "steelblue", alpha = 0.7) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +  # raudona linija ties 0
+  labs(title = "Metilinimo pokytis (T18 - T0) per visas CpG pozicijas",
+       x = "Vidutinis beta pokytis (delta)", y = "CpG pozicijų skaičius") +
+  theme_minimal()
+
+# Amžiaus koreliacija su metilinimu (epigenetinis laikrodis)
+
+# ikriname, ar yra CpG pozicijų, kurių bazinis metilinimo lygis (T0)
+# stipriai koreliuoja su donoro amžiumi.
+
+# Atskiriame tik T0 mėginius (baziniai duomenys prieš intervenciją)
+data_t0 <- data_without_outliers[, meta_clean$timepoint == 0]
+
+# Paimame donorų amžius
+ages <- colanns(data_t0)$age
+
+# Skaičiuojame Pearson koreliaciją tarp kiekvienos CpG pozicijos beta reikšmės ir amžiaus
+cor_with_age <- apply(data_t0, 1, function(x) cor(x, ages, use = "pairwise.complete.obs"))
+
+# Vizualizuojame koreliacijos pasiskirstymą — tikimės normalaus pasiskirstymo apie 0
+# su keliais stipriau koreliuojančiais CpG
+df_age_cor <- data.frame(correlation = cor_with_age)
+
+ggplot(df_age_cor, aes(x = correlation)) +
+  geom_histogram(bins = 100, fill = "darkorange", alpha = 0.7) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  labs(title = "CpG metilinimo koreliacija su amžiumi (T0)",
+       x = "Pearson koreliacija", y = "CpG pozicijų skaičius") +
+  theme_minimal()

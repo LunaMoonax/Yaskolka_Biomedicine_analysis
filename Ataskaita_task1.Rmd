@@ -5,6 +5,7 @@ date: "2026-04-01"
 output: 
   pdf_document: 
     latex_engine: xelatex
+    fig_crop: false
 ---
 
 ```{r setup, include=FALSE}
@@ -20,16 +21,27 @@ library(knitr)
 
 **Publikacijos autoriai**: Maria Keller, Anat Yaskolka Meir, Stephan H. Bernhart, Yftach Gepner, Ilan Shelef, Dan Schwarzfuchs, Gal Tsaban, Hila Zelicha, Lydia Hopp, Luise Müller, Kerstin Rohde, Yvonne Böttcher, Peter F. Stadler, Michael Stumvoll, Matthias Blüher, Peter Kovacs & Iris Shai.
 
+**Tyrimo idėja**: Specifiniai DNR metilinimo pokyčiai atspindi individualų atsaką į gyvenimo būdą (dietą ir fizinį aktyvumą) ir gali būti naudojami kaip epigenetiniai žymenys sėkmingam svorio metimui prognozuoti.
+
+**Surinkti duomenys**: Tyrėjai surinko kraujo mėginius iš 120 tiriamųjų (90% vyrų, amžiaus vidurkis ~49 m., BMI ~30.2) dviem laiko taškais — prieš intervenciją (pradžioje) ir po 18 mėnesių. Iš šių mėginių buvo išskirta DNR ir atlikta genominio masto DNR metilinimo analizė. Be epigenetinių duomenų, buvo renkami metaboliniai ir antropometriniai rodikliai — svoris, liemens apimtis, KMI, lipidų profilis ir kt., leidžiantys įvertinti intervencijos sėkmingumą ir koreliuoti metilinimo pokyčius su svorio metimu.
+
+**Tyrimo eksperimento dizainas**: Tai atsitiktinių imčių kontroliuojamas tyrimas (RCT) su dviejų etapų randomizacija, vadinamas CENTRAL tyrimu. Pirmas etapas (0–6 mėn.): 278 dalyviai atsitiktinai paskirstyti į dvi vienodo kaloringumo dietos grupes — Viduržemio jūros / mažai angliavandenių (MED/LC, N=139) arba mažai riebalų (LF, N=139). Antras etapas (6–18 mėn.): kiekviena dietos grupė pakartotinai randomizuota į pogrupius su vidutinio intensyvumo aerobiniu fiziniu aktyvumu (+PA) arba be jo (−PA). Taip susidarė keturios intervencijos grupės: LF+PA, LF−PA, MED/LC+PA, MED/LC−PA. DNR metilinimo analizei iš visų dalyvių atrinkti 120 asmenų (po 30 iš kiekvienos grupės, labiausiai numetusių svorio). Kraujo mėginiai paimti dviem laiko taškais — prieš intervenciją (T0) ir po 18 mėn. Papildomai atlikta respondentų vs. nerespondentų palyginamoji analizė: 10 daugiausiai svorio numetusių vyrų (respondentai, −16%) palyginti su 10 svorio nepraradusių vyrų (nerespondentai, +2.4%), suderinus pagal amžių.
+
 **Panaudotos analizės**: įvertinta ląstelių kompozicija remiantis Houseman approach, o skirtumai analizuoti Vilkoksono testu. Norint identifikuoti skirtumus diferentiškai metilintuose regionuose (DMR) tarp T0 ir T18 grupių naudotasi DMR ieškotoju ‘metilene’. Atrinkti DMR regionai buvo anotuojami. Tarpusavyje palygintos grupės: T0 ir T18, fizinio aktyvumo (ne)buvimas, mažesnio riebalų/angliavandenių kiekių dietos. Atlikta CpG analizė dmpFinder įrankiu. Kolmogorv-Smirnov testas buvo atliktas norint palyginti DNR metilinimo pokyčius tarp top 10 geriausius ir 10 blogiausius rezultatus pademonstravusių tiriamųjų. Spearmano ir Pearsono koreliacijos testai buvo atlikti norint susieti CpG saleles su sėkmingais kūno masės mažinimo rezultatais. Epigenome-wide association study (EWAS) buvo atlikta reliatyviam kūno masės sumažėjimui naudojantis CMplot. Naudojantis ROC kreivės modeliu nustatytas bazinis metilinimo įvertis. Fenotipų koreliacija T0 ir T18 grupėms su baziniais metilinimo lygiais (identifikuotų CpG salelių, DMR) buvo nustatyta remiantis Pearsono ir Spearmano koreliacijos testais. Identifikuotos DMR, CpG salelės susietos su atitinkamais chromatino segmentais naudojantis Epigenomic Roadmap. Atlikta genų ontologijos analizė.
 
 **Rezultatai**: nustatyti reikšmingi DNR metilinimo pakitimai tarp asmenų, kuriems sėkmingai pavyko numesti svorio, ir asmenų, kurie susidūrė su sunkumais metant svorį, genuose CRISP2, SLC6A12, SLFN12, AURKC (padidėjęs metilinimo lygis pirmojoje grupėje) ir LRRC27, RNF39, LINC00539, NTSR1 (sumažėjęs metilinimo lygis pirmojoje grupėje).  SLC6A12 metilinimo lygis buvo stipriausiai pakitęs tarp šių grupių. Kai kurie genai siejami su ląstelių adhezija, kalcio jonų prisijungimu (pagal genų ontologijos analizę). Su kūno svorio mažinimo intervencijomis siejami metilinimo pakitimai CpG regionuose, kurie dengia miR-6723 bei MTND1P23 ir MTND1928 pseudogenus. Nustatyta 15 neigiamai su kūno masės pokyčiais koreliuotų CpG salelių, pavyzdžiui, genuose NUDT3 ir NCOR2, ir 32 teigiamai koreliuotos CpG salelės. Stipriausi CpG salelių metilinimo efektai pastebėti netoli MAPKAP1, HM13, KIAA0513 genų lokusų. DMR regionas nuo introno 3 iki 4 egzono geno RNF39 koreliavo su HOMA indeksu ir gliukozės lygiais 17 dengiančių šiam regionui CpG salelių. Didžioji dalis šių salelių buvo neigiamai koreliuotos su adiponektino serumo lygiais bei teigiamai su KMI po intervencijos. DNR metilinimo įvertis reikšmingesnis faktorius prognozuojant sėkmingą svorio mažinimą negu amžius ir KMI.
 
 **Išvados**: 18 mėnesių trunkanti svorio mažinimo programa susijusi su DNR metilinimo pasikeitimais. DNR metilinimas gali tapti potencialu biomarkeriu įvertinant kūno masės mažinimo programos sėkmingumą ir pritaikant specifinį planą asmeniui.
 
+## Duomenų rinkinio aprašymas.
 
-```{r graphs, echo=FALSE, warning=FALSE, message=FALSE}
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+**Metodas**: Siekiant įvertinti duomenų struktūrą, aprašome duomenų rinkinį:
+1) Tiriamieji — kiek donorų, koks lyčių santykis, amžiaus pasiskirstymas, kaip donorai pasiskirsto tarp intervencijos grupių, koks audinio tipas ir diagnozė.
+2) Genominės pozicijos — kiek CpG vietų išmatuota ir kaip jos pasiskirsto tarp chromosomų.
+
+```{r donor_data, echo=FALSE, warning=FALSE, message=FALSE}
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -38,27 +50,124 @@ library(patchwork)
 
 data <- readRDS("yaskolka.rds")
 
+# Duomenų aprašymas
+
 showtext_auto()
 
+# Pasinaudojant lentelėmis ir grafikais, nagrinėsime duotus duomenis siekiant juos aprašyti.
+
+# naudodami metaduomenis (colanns) ir CpG anotacijas (rowanns)
+meta <- colanns(data)
+probe_ann <- rowanns(data)
+
+# Bendras mėginių skaičius
+cat("Mėginių skaičius:", nrow(meta), "\n")
+
+# Unikalių donorų skaičius (pašaliname pasikartojimus dėl dviejų laiko taškų)
+donors <- meta[!duplicated(meta$donor), ]
+cat("Unikalių donorų skaičius:", nrow(donors), "\n")
+
+# Lyčių pasiskirstymas tarp donorų
+cat("Lyčių pasiskirstymas (M - vyrai, F - moterys):")
+table(donors$sex)
+
+# Amžiaus vidurkis
+meta_t0 <- meta[meta$timepoint == 0, ]
+cat("Amžiaus vidurkis:", mean(meta_t0$age), "\n")
+```
+
+Analizuojamą duomenų rinkinį sudaro 240 mėginių, gautų iš 120 unikalių donorų. Taip yra dėl to, nes kiekvienas donoras turi du mėginius: prieš ir po internvencijos. Dauguma dodnorų yra vyrai - 110 (90%) ir tik 10 moterų (10%). Donorų amžiaus vidurkis - apie 49 metai.
+
+```{r age_distribution, echo=FALSE, warning=FALSE, message=FALSE}
+# Amžiaus pasiskirstymas pagal lytį
+ggplot(meta_t0, aes(x = age, fill = sex)) +
+  geom_histogram(bins = 12, alpha = 0.7) +
+  facet_wrap(~sex, scales = "free_y") +
+  scale_fill_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "Donorų amžiaus pasiskirstymas pagal lytį",
+       x = "Amžius (metai)", y = "Skaičius") +
+  theme_minimal()
+```
+
+Donorų amžiaus diapazonas svyruoja nuo ~30 iki ~70 metų. Moterų grupė per maža, kad būtų galima patikimai lyginti amžiaus pasiskirstymą tarp lyčių, tačiau iš histogramų matyti, kad vyrų amžius pasiskirsto plačiai, o moterys pasiskirsčiusios ~39–64 metų intervale.
+
+```{r groups, echo=FALSE, warning=FALSE, message=FALSE}
+# Mėginių skaičius pagal intervencijos grupę
+ggplot(meta_t0, aes(x = diet, fill = stimulus)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Donorų pasiskirstymas pagal dietą ir fizinį aktyvumą",
+       x = "Dieta", y = "Donorų skaičius", fill = "Fizinis aktyvumas") +
+  theme_minimal()
+```
+
+Donorai pasiskirsto į keturias intervencijos grupes pagal dietos tipą (mažai angliavandenių arba mažai riebalų) ir fizinio aktyvumo buvimą ar nebuvimą. Kiekvienoje grupėje yra po 30 donorų, pasiskirstymas tolygus.
+
+```{r cpg, echo=FALSE, warning=FALSE, message=FALSE}
+# Bendras matuotų CpG pozicijų skaičius 
+cat("CpG pozicijų skaičius:", nrow(probe_ann), "\n")
+
+# Iš duomenų lentelės išrinksime kiek CpG pozicijų yra kiekvienoje chromosomoje
+chr_counts <- table(probe_ann$chr)
+chr_df <- data.frame(chr = names(chr_counts), count = as.numeric(chr_counts))
+# Surikiuojame chromosomas
+chr_df$chr <- factor(chr_df$chr, levels = paste0("chr", c(1:22, "X", "Y")))
+chr_df <- chr_df[!is.na(chr_df$chr), ]
+
+# CpG pasiskirstymas tarp chromosomų
+ggplot(chr_df, aes(x = chr, y = count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "CpG pozicijų pasiskirstymas tarp chromosomų",
+       x = "Chromosoma", y = "CpG skaičius") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+DNR metilinimas matuotas 865 859 CpG pozicijose. CpG pozicijų pasiskirstymas tarp chromosomų nėra tolygus — daugiausiai CpG vietų tenka didžiosioms chromosomoms (chr1, chr2, chr6), mažiausiai — chrY.
+
+```{r cell and diagnosis, echo=FALSE, warning=FALSE, message=FALSE}
+# Patikriname, ar rinkinyje yra daugiau nei vienas audinio tipas ar diagnozė
+# Ląstelės tipai
+cat("Ląstelės tipai:")
+table(meta$celltype)
+
+# Diagnozės tipai
+cat("Diagnozės tipai:")
+table(meta$diagnosis)
+```
+
+Visi mėginiai gauti iš vieno audinio tipo — periferinio kraujo (whole blood), kitų audinių rinkinyje nėra. Taip pat visi donorai turi vieną diagnozę — adipositas (nutukimas), t. y. sveikų kontrolinės grupės duomenyse nėra.
+
+## Kokybės kontrolės.
+
+**Metodas**: Tikriname, ar beta reikšmių pasiskirstymas atitinka biologiškai tikėtiną modelį: CpG salose (Island) metilinimo lygis turėtų būti žemas, atvirose jūros srityse (OpenSea) — aukštas, pakrančių (Shore) ir šelfų (Shelf) regionuose — tarpinis.
+
+Tam apskaičiuojame kiekvienos CpG pozicijos vidutinį beta lygį per visus mėginius ir atvaizduojame tankio grafiką, suskirstę pozicijas į 4 regionus pagal anotaciją relation_to_island (Island, Shore, Shelf, OpenSea).
+
+```{r quality1, echo=FALSE, warning=FALSE, message=FALSE}
 # Kokybės kontrolė #1
+
+# Tikriname, ar beta reikšmių pasiskirstymas atitinka biologiškai tikėtiną modelį:
+# - CpG salose (Island) metilinimo lygis turėtų būti žemas,
+# - atvirose jūros srityse (OpenSea) — aukštas,
+# - pakrančių (Shore) ir šelfų (Shelf) regionuose — tarpinis.
 
 # Suskaičiuojame metilinimo lygių (beta) vidutines reikšmes eilutėms
 mean_beta <- rowMeans(data, na.rm = TRUE)
 
-# Sukuriame dataframe, kuri bus naudojama grafike
+# Sukuriame dataframe, kuris bus naudojama grafike
 df <- data.frame(
   mean_beta = mean_beta,
   region = data@relation_to_island
 )
 
-# Suskirstome relation_to_island reikšmes 4 grupes, kurios mums yra reikalingos kokybės kontrolei patvirtinti
+# Suskirstome relation_to_island reikšmes į 4 grupes, kurios mums yra reikalingos kokybės kontrolei patvirtinti
 df$region_grouped <- case_when(
   df$region == "Island" ~ "Island",
   df$region == "OpenSea" ~ "OpenSea",
   df$region %in% c("N_Shelf", "S_Shelf") ~ "Shelf",
   df$region %in% c("N_Shore", "S_Shore") ~ "Shore"
 )
-# Sugrupuojame lygiais, kad grafike būtų atvaizduota mums reikalinga tvarka
+# Sugrupuojame, kad grafike būtų atvaizduota mums reikalinga tvarka
 df$region_grouped <- factor(df$region_grouped, levels = c("Island", "Shore", "Shelf", "OpenSea"))
 
 # Piešiame grafiką
@@ -77,8 +186,17 @@ ggplot(df, aes(x = mean_beta, color = region_grouped)) +
 # Atviros jūros regionai yra panašiai metilinti kaip šleifai - didžiausia dalis yra metilinta.
 # Grafikas patvirtina, kad CpG salos yra nemetilintos, daugiau yra krantai, o daugiausiai
 # šleifai ir atviros jūros regionai. Vadinasi mūsų mėginiai atitinka kokybės kontrolę.
+```
 
+Grafike matoma, kad salų (Island) regionai yra mažiausiai metilinti — didžioji jų dalis yra nemetilinta. Krantų (Shore) regionuose pasiskirstymas yra maždaug po lygiai tarp nemetilintų ir metilintų pozicijų. Šelfų (Shelf) regionai yra labiau metilinti nei krantai ar pačios salos. Atvirų jūrų (OpenSea) regionai panašūs į šelfus — didžiausia dalis pozicijų yra metilinta. Toks pasiskirstymas atitinka tikėtiną biologinį modelį, vadinasi mūsų duomenys atitinka kokybės kontrolės reikalavimus.
+
+**Metodas**: Tikriname, ar mėginiai, priklausantys tai pačiai biologinei grupei, yra panašesni tarpusavyje nei mėginiai iš skirtingų grupių. Tam apskaičiuojame visų mėginių porų Pearson koreliacijas pagal beta reikšmes ir lyginame koreliacijos pasiskirstymą grupės viduje vs. tarp grupių keturiems kintamiesiems: lytis, donoras, dieta, aktyvumas.
+
+```{r quality2, echo=FALSE, warning=FALSE, message=FALSE}
 # Kokybės kontrolė #2
+
+# Tikriname, ar mėginiai, priklausantys tai pačiai biologinei grupei, yra panašesni
+# tarpusavyje nei mėginiai iš skirtingų grupių.
 
 # Apskaičiuojame koreliacijas
 cor_matrix <- cor(data, use = "pairwise.complete.obs")
@@ -100,7 +218,7 @@ df <- data.frame(
   stimulus_same = ifelse(sample_ann$stimulus[lower[,1]] == sample_ann$stimulus[lower[,2]], "Grupės viduje", "Tarp grupių")
 )
 
-# Sukuriame visų analizuojamų grupių grafikai
+# Sukuriame visų analizuojamų grupių grafikus
 p1 <- ggplot(df, aes(x = cor, color = sex_same)) + geom_density(linewidth = 1) +
   labs(title = "Lytis", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
 
@@ -114,9 +232,14 @@ p4 <- ggplot(df, aes(x = cor, color = stimulus_same)) + geom_density(linewidth =
   labs(title = "Aktyvumas", x = "Koreliacija", color = "Ta pati grupė") + theme_minimal()
 
 p1 / p2 / p3 / p4
+
+# Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis nei tarp skirtingų grupių.
+# Tai yra rezultatas, kurio ir tikėjomės, vadinasi kokybės kontrolę atitinka.
+# Papildomai patikrinta Dietos ir Aktyvumo grupės. Kadangi šios grupės nebuvo tarp tų, kurios būtų žinomos,
+# kad DNR modifikacija skiriasi, matome kad tiek grupės viduje, tiek tarp grupių yra vienodas panašumas.
 ```
 
-Lyties ir Donoro grafikuose matoma, kad panašumas grupės viduje yra didesnis nei tarp skirtingų grupių. Tai yra rezultatas, kurio ir tikėjomės, vadinasi kokybės kontrolę atitinka. Papildomai patikrinta Dietos ir Aktyvumo grupės. Kadangi šios grupės nebuvo tarp tų, kurios būtų žinomos, kad DNR modifikacija skiriasi, matome kad tiek grupės viduje, tiek tarp grupių yra vienodas panašumas.
+Lyties ir donoro grafikuose matoma, kad koreliacija grupės viduje yra aukštesnė nei tarp skirtingų grupių — tai rodo, kad tos pačios lyties ar to paties donoro mėginiai yra panašesni tarpusavyje. Tokio rezultato ir tikėjomės, todėl kokybės kontrolė patvirtinta. Dietos ir fizinio aktyvumo grupėse tokio skirtumo nematome — koreliacijos pasiskirstymas grupės viduje ir tarp grupių yra beveik identiškas. Tai taip pat tikėtina, nes šios intervencijos neturėtų lemti ryškių DNR metilinimo skirtumų.
 
 ## Išskirčių paieška
 
@@ -520,3 +643,159 @@ heatmap(cg_matrix[1:10,])
 ```
 
 Visuose 10 pavaizduotų cg pozicijų stebimi dideli metilinimo kontrastai tarp mėginių, ypač dideli skirtumai matomi pozicijoje cg2413987. Mėginių metilinimo intensyvumas nestipriai grupuojasi tarp skirtingų cg pozicijų, bet galima pastebėti tam tikras grupes: metilinimas susitiprėjęs mėginiuose 181_T0, 198_T0, 315_T0, pozicijose: cg02006792, cg08146708, cg06616511, cg14755254, cg18218696 arba mėginiuose 276_T0, 89_T18, 116_T0, 97_T18, 315_T0. Grupavimasis taip pat stebimas apatiniame dešiniajame kampe pozicijose cg08223187, cg02006792, cg06616511.
+
+## Apžvalginė analizė
+
+### PCA — Pagrindinių komponenčių analizė
+
+**Metodas**: Atliekame pagrindinių komponenčių analizę (PCA), kad nustatytume, kokie faktoriai labiausiai lemia mėginių metilinimo variaciją. Kiekvieną PC1 vs PC2 grafiką spalviname pagal skirtingą klinikinį kintamąjį (lytį, laiko tašką, dietą, fizinį aktyvumą), kad vizualiai įvertintume, ar mėginiai natūraliai grupuojasi pagal kurį nors faktorių. Papildomai žiūrime PC1 vs PC3, kad patikrintume, ar trečioji komponentė atskleidžia kitus variaciją lemiančius faktorius.
+
+```{r pca1, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
+# PCA — Pagrindinių komponenčių analizė
+# Atliekame PCA, kad nustatytume, kokie faktoriai labiausiai lemia mėginių metilinimo variaciją.
+
+# Ttransponuojame matricą (t), nes PCA tikisi mėginius eilutėse, o CpG stulpeliuose
+pca <- prcomp(t(data_without_outliers), center = TRUE, scale. = FALSE)
+
+# Sukuriame data.frame su pirmosiomis trimis komponentėmis ir klinikiniais duomenimis
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  PC3 = pca$x[,3],
+  colanns(data_without_outliers)
+)
+
+# Apskaičiuojame, kiek variacijos (%) paaiškina kiekviena komponentė
+variance_explained <- summary(pca)$importance[2, 1:5] * 100
+cat("Variacijos dalis (%), kurią paaiškina pirmosios 5 komponentės:\n")
+print(round(variance_explained, 2))
+```
+Penkios pirmosios komponentės kartu paaiškina apie 29.5% visos variacijos. Likusi variacija pasiskirsto tarp daugybės smulkesnių komponenčių, kas būdinga dideliems metilinimo duomenų rinkiniams, kur daug nepriklausomų biologinių signalų prisideda prie bendros variacijos.
+
+```{r pca2, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
+# Grafikas pagal lytį
+p_sex <- ggplot(pca_df, aes(x = PC1, y = PC2, color = sex)) +
+  geom_point(size = 2, alpha = 0.7) +
+  scale_color_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "Lytis",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal laiko tašką (T0 vs T18)
+p_time <- ggplot(pca_df, aes(x = PC1, y = PC2, color = as.factor(timepoint))) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Laiko taškas", color = "Timepoint",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal dietos tipą
+p_diet <- ggplot(pca_df, aes(x = PC1, y = PC2, color = diet)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Dieta",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Grafikas pagal fizinį aktyvumą
+p_stim <- ggplot(pca_df, aes(x = PC1, y = PC2, color = stimulus)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Fizinis aktyvumas",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC2 (", round(variance_explained[2], 1), "%)")) +
+  theme_minimal()
+
+# Sudedame visus keturis grafikus į vieną paveikslą
+(p_sex | p_time) / (p_diet | p_stim)
+```
+
+Lyties grafike matomas aiškiausias grupavimasis — moterų mėginiai atsiskiria nuo vyrų PC2 ašyje, kas rodo, kad lytis yra pagrindinis faktorius, lemiantis metilinimo variaciją. Laiko taško (T0 vs T18) grafike mėginiai visiškai susimaišę — tai rodo, kad intervencija nesukėlė didelių metilinimo pokyčių. Dietos ir fizinio aktyvumo grafikuose taip pat nematoma jokio grupavimosi, vadinasi šie faktoriai neturi ryškaus poveikio bendram metilinimo profiliui. 
+PCA rezultatai patvirtina klasterizavimo metu stebėtą lyties efektą.
+Delta beta analizė kiekybiškai patvirtina tai, ką matėme PCA — intervencija nesukėlė didelių globalių pokyčių.
+
+```{r pca3, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
+# Žiūrime PC3, ar joje matosi kiti faktoriai
+ggplot(pca_df, aes(x = PC1, y = PC3, color = sex)) +
+  geom_point(size = 2, alpha = 0.7) +
+  scale_color_manual(values = c("F" = "#E8A0BF", "M" = "#7FC8D8")) +
+  labs(title = "PCA: PC1 vs PC3, spalvinta pagal lytį",
+       x = paste0("PC1 (", round(variance_explained[1], 1), "%)"),
+       y = paste0("PC3 (", round(variance_explained[3], 1), "%)")) +
+  theme_minimal()
+```
+
+PC1 vs PC3 grafike moterys (rožinės) vėl atsiskiria nuo vyrų — šį kartą PC3 ašyje (viršutinė grafiko dalis). Tai rodo, kad lyties efektas yra stiprus ir apima ne tik PC2, bet ir PC3 komponentę.
+
+### Metilinimo pokytis tarp mėginių laike
+
+**Metodas**: Siekiant įvertinti, ar 18 mėnesių gyvenimo būdo intervencija sukėlė sistemingų DNR metilinimo pokyčių, kiekvienai CpG pozicijai apskaičiuotas vidutinis metilinimo pokytis (delta beta = T18 − T0) per visus donorus, turinčius abu laiko taškus. Delta beta pasiskirstymas vizualizuotas histograma, kur raudona linija žymi nulinį pokytį.
+
+```{r time, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
+# Metilinimo pokytis tarp T0 ir T18
+# Kiekvienam donorui apskaičiuojame metilinimo pokytį (T18 - T0)
+# kiekvienoje CpG pozicijoje. Tada žiūrime, kurios pozicijos vidutiniškai
+# pakito labiausiai per visus donorus.
+
+# Pasiimame mėginių metaduomenis
+meta_clean <- colanns(data_without_outliers)
+
+# Išskiriame T0 ir T18 donorus
+t0_donors <- meta_clean$donor[meta_clean$timepoint == 0]
+t18_donors <- meta_clean$donor[meta_clean$timepoint == 18]
+
+# Surandame donorus, kurie turi abu laiko taškus
+common_donors <- intersect(t0_donors, t18_donors)
+
+# Surandame stulpelių indeksus atitinkamiems T0 ir T18 mėginiams
+t0_idx <- match(paste0(common_donors, "_T0"), colnames(data_without_outliers))
+t18_idx <- match(paste0(common_donors, "_T18"), colnames(data_without_outliers))
+
+# Skaičiuojame vidutinį delta beta (T18 - T0) kiekvienai CpG pozicijai per visus donorus
+delta_beta <- rowMeans(data_without_outliers[, t18_idx] - data_without_outliers[, t0_idx], na.rm = TRUE)
+
+# Vizualizuojame delta beta pasiskirstymą — tikimės, kad dauguma pokyčių bus arti 0
+df_delta <- data.frame(delta = delta_beta)
+
+ggplot(df_delta, aes(x = delta)) +
+  geom_histogram(bins = 100, fill = "steelblue", alpha = 0.7) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +  # raudona linija ties 0
+  labs(title = "Metilinimo pokytis (T18 - T0) per visas CpG pozicijas",
+       x = "Vidutinis beta pokytis (delta)", y = "CpG pozicijų skaičius") +
+  theme_minimal()
+```
+
+Absoliuti dauguma CpG pozicijų po 18 mėnesių intervencijos nepakeitė metilinimo lygio — vidutinis pokytis artimas nuliui. Pasiskirstymas šiek tiek pasislinkęs į neigiamą pusę, kas rodo nedidelę bendrą demetilinimo tendenciją.ai Tatitinka rodo, jog gyvenimo būdo intervencija sukelia tik mažus metilinimo pokyčius.
+
+### Amžiaus koreliacija su metilinimu
+
+**Metodas**: Tikriname, ar egzistuoja CpG pozicijos, kurių bazinis metilinimo lygis (T0) stipriai koreliuoja su donoro amžiumi — tai atspindėtų epigenetinio senėjimo principą, kai tam tikros CpG pozicijos sistemingai keičia metilinimą bėgant metams. Kiekvienai CpG pozicijai apskaičiuota Pearson koreliacija tarp beta reikšmės ir donoro amžiaus, naudojant tik pradinius (T0) mėginius. Koreliacijos koeficientų pasiskirstymas vizualizuotas histograma.
+
+```{r age-time, echo=FALSE, warning=FALSE, fig.width=12, fig.height=10}
+# Amžiaus koreliacija su metilinimu (epigenetinis laikrodis)
+
+# ikriname, ar yra CpG pozicijų, kurių bazinis metilinimo lygis (T0)
+# stipriai koreliuoja su donoro amžiumi.
+
+# Atskiriame tik T0 mėginius (baziniai duomenys prieš intervenciją)
+data_t0 <- data_without_outliers[, meta_clean$timepoint == 0]
+
+# Paimame donorų amžius
+ages <- colanns(data_t0)$age
+
+# Skaičiuojame Pearson koreliaciją tarp kiekvienos CpG pozicijos beta reikšmės ir amžiaus
+cor_with_age <- apply(data_t0, 1, function(x) cor(x, ages, use = "pairwise.complete.obs"))
+
+# Vizualizuojame koreliacijos pasiskirstymą — tikimės normalaus pasiskirstymo apie 0
+# su keliais stipriau koreliuojančiais CpG
+df_age_cor <- data.frame(correlation = cor_with_age)
+
+ggplot(df_age_cor, aes(x = correlation)) +
+  geom_histogram(bins = 100, fill = "darkorange", alpha = 0.7) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  labs(title = "CpG metilinimo koreliacija su amžiumi (T0)",
+       x = "Pearson koreliacija", y = "CpG pozicijų skaičius") +
+  theme_minimal()
+```
+
+Didžioji dalis CpG pozicijų su amžiumi nekoreliuoja — koreliacijos koeficientai sutelkti apie nulį. Tai tikėtina, nes dauguma metilinimo pozicijų išlieka stabilios nepriklausomai nuo amžiaus. Vis dėlto, abiejose histogramos pusėse matomi „uodegos" — tai pozicijos, kurių metilinimas sistemingai didėja arba mažėja su amžiumi. Tokios pozicijos yra būdingos epigenetiniam senėjimui ir gali sutapti su žinomais epigenetinio laikrodžio žymenimis.
