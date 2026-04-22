@@ -1,14 +1,15 @@
 # Antra užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
 library(matrixTests)
 library(effectsize)
 library(gridExtra)
+library(qqman)
 
 data <- readRDS("yaskolka.rds")
 
@@ -166,3 +167,44 @@ ggplot(p_values_wilcoxon, aes(x=pvalue)) +
 
 # Statiškai patikimų (<=0.05) p verčių kiekis pagal Vilkoksono testą.
 sum(p_values_wilcoxon$pvalue <= 0.05)
+
+# 5. Manhattan grafikas
+
+# Sudarom duomenų rinkinį manhattann plotui su reikalingais duomenimis
+manhattan_df <- data.frame(
+  SNP = rownames(data_without_outliers),
+  CHR = as.numeric(gsub("chr", "", data_without_outliers@chr)),
+  BP = data_without_outliers@pos,
+  P = p_values_ttest$pvalue
+)
+
+# Pašaliname tuščias reikšmes, kad plotas būtų atvaizduotas tiksliai
+manhattan_df <- manhattan_df[!is.na(manhattan_df$CHR) & !is.na(manhattan_df$P) & !is.na(manhattan_df$BP), ]
+
+# Braižome manhattan plotą
+manhattan(manhattan_df, main = "Manhattan grafikas (visos chromosomos)",
+          suggestiveline = FALSE, genomewideline = -log10(0.05),
+          col = c("steelblue", "darkorange"))
+# Dauguma taškų yra patikimi (virš raudonos linijos, kuri žymi p=0.05). Kuo aukštesnis taškas
+# tuo patikimesnis skirtumas (p rekšmė mažiausia). 
+# Grafike labiausiai išsiskiria 19 chromosoma - palyginus su kitomis chromosomomis
+# ji turi daugiausiai taškų, kurie yra aukštai (ne tik pavienį tašką).
+
+# Kadangi norime atvaizduoti tik vieną chromosomą ir suprantamai, čia pasinaudosime ggplot
+# Paruošiame duomenis grafikui, logoritmuojame ir konvertuojame pozicijas į megabazes (Mb)
+chr19 <- manhattan_df[manhattan_df$CHR == 19, ]
+chr19$logp <- -log10(chr19$P)
+chr19$pos_mb <- chr19$BP / 1e6
+
+# Braižome manhattan plotą 19 chromosomai
+ggplot(chr19, aes(x = pos_mb, y = logp)) +
+  geom_point(size = 1, alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+  scale_x_continuous(breaks = seq(0, 60, by = 5)) +
+  labs(
+    title = "Manhattan grafikas (19 chromosoma)",
+    x = "Genominė pozicija (Mb)",
+    y = expression(-log[10](p))
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
