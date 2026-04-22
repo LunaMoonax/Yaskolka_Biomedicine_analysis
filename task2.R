@@ -208,3 +208,37 @@ ggplot(chr19, aes(x = pos_mb, y = logp)) +
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+# 6. GO analizė
+
+# Naudosime GOrilla internetinį įrankį
+
+# Apaskaičiuojame vidurkių skirtumą (T18 - T0)
+# Vidurkius panaudosime skirstant į grupes.
+mean_diff <- rowMeans(data_t18) - rowMeans(data_t0)
+
+# Pasirenkame tik patikimus skirtumus
+significant_cpg <- p_values_ttest$pvalue < 0.05
+
+# Padalijame į grupes pagal metilinimą - kur viena grupė labiau metilinta už kitą ir atvirkščiai.
+hyper <- significant_cpg & mean_diff > 0   # T18 > T0
+hypo  <- significant_cpg & mean_diff < 0   # T18 < T0
+
+# Funkcija, kuri panaikins kablaitaškius ir paruoš pavadinimus pagal reikiamą formatą analizei
+split_genes <- function(gene_vector) {
+  genes <- unlist(strsplit(gene_vector, ";"))
+  genes <- genes[genes != ""]
+  unique(genes)
+}
+
+# Išrenkame visų genų pavadinimus
+genes_background <- split_genes(data_without_outliers@ucsc_refgene_name)
+
+# Padaliname genų pavadinimus pagal sukurtas grupes
+genes_hyper <- split_genes(data_without_outliers@ucsc_refgene_name[hyper])
+genes_hypo  <- split_genes(data_without_outliers@ucsc_refgene_name[hypo])
+
+# Išsaugome į failus (GO analize atliksime puslapyje)
+writeLines(genes_hyper, "genes_hyper.txt")
+writeLines(genes_hypo, "genes_hypo.txt")
+writeLines(genes_background, "genes_background.txt")
