@@ -1,12 +1,13 @@
 # Antra užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
-setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
 library(matrixTests)
+library(effsize)
 library(effectsize)
 library(gridExtra)
 library(qqman)
@@ -33,6 +34,22 @@ data_t18 <- data_without_outliers[,data_without_outliers$timepoint == 18]
 # Apskaičiuojami p_values tiek t testo, tiek Vilkoksono testo metodais.
 p_values_ttest <- row_t_paired(data_t0, data_t18)
 p_values_wilcoxon <- row_wilcoxon_paired(data_t0, data_t18)
+
+# Vienas iš būdų apibūdinti efekto dydį - Cohen's d.
+# Jis apibrėžia efekto dydį kaip vidurkių skirtumą standartinio nuokrypio vienetais.
+
+# Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai ir išsaugoma [[3]] - Cohen's d reikšmė.
+eff_val_cohensd <- mapply(function(i) {
+  cohen.d(data_t18[i, ], data_t0[i, ], paired = TRUE)[[3]]
+}, 1:nrow(data_t0))
+
+# Kitas efekto dydis: r - koreliacija apskaičiuojama rangais panašiai kaip Wilcoxon suporuotų duomenų testu.
+
+# Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai.
+# Išsaugoma [[1]] r reikšmė iš gauto rank_biserial objekto.
+eff_val_r <- mapply(function(i) {
+  rank_biserial(data_t18[i, ], data_t0[i, ], paired = TRUE)[[1]]
+}, 1:nrow(data_t0))
 
 # 2. Patikimiausių skirtumų profiliai.
 
