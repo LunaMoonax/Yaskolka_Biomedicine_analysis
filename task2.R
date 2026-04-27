@@ -1,8 +1,8 @@
 # Antra užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -233,6 +233,37 @@ sum(p_values_wilcoxon$pvalue < 0.05)
 # Kokią dalį visų CpG pozicijų sudaro statistiškai patikimi CpG.
 sum(p_values_wilcoxon$pvalue < 0.05) / length(rownames(data)) * 100
 
+# 4. Volcano grafikas
+
+# Sukuriame duomenų lentelę, skirtą volcano grafikui pavaizduoti
+volcano_df <- data.frame(
+  mean_diff = p_values_ttest$mean.diff,
+  logp = -log10(p_values_ttest$pvalue)
+)
+
+# Tam, kad grafikas būtų aiškesnis ir duotų daugiau informacijos, duomenis paskirstome kategorijomis
+# Visus duomenis kol kas priskiriame nereikšmingus.
+# Reikšmingi tampa tie, kurių p_value dydis yra mažesnis negu 0.05 ir atitinkamai efekto dydis
+# priskiriamas hipermetilintai, arba hipometilintam.
+volcano_df$category <- "Nereikšmingas"
+volcano_df$category[p_values_ttest$pvalue < 0.05 & volcano_df$mean_diff > 0.01] <- "Hipermetilinta"
+volcano_df$category[p_values_ttest$pvalue < 0.05 & volcano_df$mean_diff < -0.01] <- "Hipometilinta"
+
+# Pavaizduojame volcano grafiką
+ggplot(volcano_df, aes(x = mean_diff, y = logp, color = category)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_color_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue", "Nereikšmingas" = "grey70")) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+  geom_vline(xintercept = c(-0.01, 0.01), linetype = "dashed", color = "black") +
+  labs(
+    title = "Volcano grafikas",
+    x = "Vidurkių skirtumas (T18 - T0)",
+    y = expression(-log[10](p[adj])),
+    color = "Kategorija"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
 # 5. Manhattan grafikas
 
 # Sudarom duomenų rinkinį manhattann plotui su reikalingais duomenimis
@@ -252,7 +283,8 @@ manhattan(manhattan_df, main = "Manhattan grafikas (visos chromosomos)",
           col = c("steelblue", "darkorange"))
 # Dauguma taškų yra patikimi (virš raudonos linijos, kuri žymi p=0.05). Kuo aukštesnis taškas
 # tuo patikimesnis skirtumas (p rekšmė mažiausia). 
-# Grafike labiausiai išsiskiria 19 chromosoma - palyginus su kitomis chromosomomis
+# Grafike dauguma chromosomų atrodo panašios, ir itin didelių skirtumų sunku rasti.
+# Pasirenkame išsiskiriančia 19 chromosoma - palyginus su kitomis chromosomomis
 # ji turi daugiausiai taškų, kurie yra aukštai (ne tik pavienį tašką).
 
 # Kadangi norime atvaizduoti tik vieną chromosomą ir suprantamai, čia pasinaudosime ggplot
@@ -296,10 +328,10 @@ split_genes <- function(gene_vector) {
   unique(genes)
 }
 
-# Išrenkame visų genų pavadinimus
+# Išrenkame visų unikalių genų pavadinimus
 genes_background <- split_genes(data@ucsc_refgene_name)
 
-# Padaliname genų pavadinimus pagal sukurtas grupes
+# Padaliname unikalius genų pavadinimus pagal sukurtas grupes
 genes_hyper <- split_genes(data@ucsc_refgene_name[hyper])
 genes_hypo  <- split_genes(data@ucsc_refgene_name[hypo])
 
