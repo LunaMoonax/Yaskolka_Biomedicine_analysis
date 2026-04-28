@@ -62,8 +62,8 @@ t18 <- sub("_.*", "", colnames(data[,data$timepoint == 18]))
 # identical(t0, t18)
 
 # Apskaičiuojami p_values tiek t testo, tiek Vilkoksono testo metodais.
-p_values_ttest <- row_t_paired(data[,data$timepoint == 0], data[,data$timepoint == 18])
-p_values_wilcoxon <- row_wilcoxon_paired(data[,data$timepoint == 0], data[,data$timepoint == 18])
+p_values_ttest <- row_t_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
+p_values_wilcoxon <- row_wilcoxon_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
 
 # P reikšmių korekcija "fdr" metodu.
 p_values_ttest$pvalue <- p.adjust(p_values_ttest$pvalue, method = "fdr")
@@ -275,6 +275,13 @@ p13 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg02364038",],
 
 grid.arrange(p11, p12, p13, nrow = 1)
 ```
+
+cg17376730 modifikacijos įverčių vidurkis po intervencijos sumažėja nuo apytiksliai 0.019 iki 0.0175. Tiek T0, tiek T18 grupės diapazonai platūs.
+
+cg09145071 modifikacijos įverčių vidurkis po intervencijos sumažėja nuo apytiksliai 0.022 iki 0.020. T0 grupėje matomos išskirtys ties 0.033 modifikacijos lygiu.
+
+cg02364038 modifikacijos įverčių vidurkis po intervencijos sumažėja nuo apytiksliai 0.030 iki 0.027. T0 grupėje matomos išskirtys ties 0.018 bei 0.048 modifikacijos lygiais, o T18 išskirtis ties 0.041 įverčiu.
+
 Visų šių modifikacijų įverčiai statistiškai reikšmingai sumažėję: cg17376730, cg09145071, cg02364038.
 
 ## 3. P verčių histogramos.
@@ -312,7 +319,7 @@ Vienas iš būdų apibūdinti efekto dydį - Cohen's d. Jis apibrėžia efekto d
 
 **Metodas**: apskaičiuoti Cohen's d ir rank-biserial efekto dydžiai CpG pozicijoms prieš intervenciją (T0) ir po intervencijos (T18). Atsirinktos statistiškai reikšmingos CpG pozicijos (p<0.05). Atlikta atranka pagal vidutinį efekto dydžio slenkstį abiems efekto dydžių tipams: 0.5. Taip pat atrinktos CpG pozicijos, kurių vidurkių skirtumas (mean difference) didesnis negu 0.1 (trečia efekto dydžių grupė). Toks skirtumas parinktas atsižvelgiant į tai, kad buvo norima rasti daugiau sutampančių CpG pozicijų tarp skirtingų efekto dydžių grupių. 
 
-Cohen's d ir rank biserial vidutinių ir stiprių efekto dydžių sąrašams buvo rastos 306 bendros CpG pozicijos. Pagal vidurkių skirtumo efekto dydžius ir Cohens'd efekto dydžius bendros buvo 124 CpG pozicijos, o pagal vidurkių skirtumo efekto dydžius ir rank biserial efekto dydžius bendros 361 CpG pozicija.
+Cohen's d ir rank biserial vidutinių ir stiprių efekto dydžių sąrašams buvo rastos 306 bendros CpG pozicijos. Pagal vidurkių skirtumo efekto dydžius ir Cohens'd efekto dydžius bendros buvo 124 CpG pozicijos, o pagal vidurkių skirtumo efekto dydžius ir rank biserial efekto dydžius bendros 359 CpG pozicijos.
 
 ```{r effect_ize, echo=FALSE, warning=FALSE, message=FALSE}
 # Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai ir išsaugoma [[3]] - Cohen's d reikšmė.
@@ -322,7 +329,7 @@ p_values_ttest$eff_val_cohensd <- mapply(function(i) {
 
 # Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai.
 # Išsaugoma [[1]] r reikšmė iš gauto rank_biserial objekto.
-p_values_wilcoxon$eff_val_r <- mapply(function(i) {
+p_values_ttest$eff_val_r <- mapply(function(i) {
   rank_biserial(data[i, data$timepoint == 18], data[i, data$timepoint == 0], paired = TRUE)[[1]]
 }, 1:nrow(data))
 
@@ -335,8 +342,7 @@ eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.03,]
 
 # Cohen's d ir r slenktis bus 0.5 (stiprus efektas).
 eff_val_cohensd_strong <- significant_ttest[abs(significant_ttest$eff_val_cohensd) > 0.5,]
-significant_wilcoxon <- p_values_wilcoxon[p_values_wilcoxon$pvalue < 0.05,]
-eff_val_r_strong <- significant_wilcoxon[abs(significant_wilcoxon$eff_val_r) > 0.5,]
+eff_val_r_strong <- significant_ttest[abs(significant_ttest$eff_val_r) > 0.5,]
 
 # Į abiejus sąrašus pagal Cohen's d ir r efekto dydžius patenkančios CpG pozicijos.
 # intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_r_strong))
@@ -358,7 +364,7 @@ eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.01,]
 # intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff))
 # length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff)))
 
-# Sutapimų skaičius padidėjo iki 361.
+# Sutapimų skaičius padidėjo iki 359.
 # intersect(rownames(eff_val_r_strong), rownames(eff_val_diff))
 # length(intersect(rownames(eff_val_r_strong), rownames(eff_val_diff)))
 
@@ -391,7 +397,7 @@ ggplot(diff_df, aes(x=relation_to_island)) +
   theme(plot.title = element_text(size = 10))
 ```
 
-Pagal vidutinį ir stiprų Cohen's d efekto dydį daugiausiai CpG pozicijų yra salose ir perpus mažiau atviros jūros regione ir pavieniai atvejai kitose srityse. Pagal vidutinį ir stiprų rank biserial efekto dydį beveik visos CpG pozicijos yra salose ir lyginant daug mažiau kituose regionuose. Didesni efekto dydžiai salose galėtų reikšti genų įjungimą/nutildymą. Reiktų atsižvelgti į tai, kad CpG pozicijų sąrašai ne vienodo ilgio: Cohens' d - 527 CpG pozicijos, rank biserial - 3546, o pagal vidurkių skirtumą - 3501. Vidurkių skirtumo efekto dydis rodo kitokią tendenciją - daugiausiai CpG pozicijų atviros jūrose regionuose, t.y. intergeniniuose regionuose arba pačių genų koduojančiose srityse, kas galbūt nebūtinai susiję su genų nutildymu ar įjungimu. Tokie skirtumai gali atsirasti dėl to, kad Cohend's d ir rank biserial yra standartizuoti efekto dydžiai, o vidurkių skirtumas - ne.
+Pagal vidutinį ir stiprų Cohen's d efekto dydį daugiausiai CpG pozicijų yra salose ir perpus mažiau atviros jūros regione ir pavieniai atvejai kitose srityse. Pagal vidutinį ir stiprų rank biserial efekto dydį beveik visos CpG pozicijos yra salose ir lyginant daug mažiau kituose regionuose. Didesni efekto dydžiai salose galėtų reikšti genų įjungimą/nutildymą. Reiktų atsižvelgti į tai, kad CpG pozicijų sąrašai ne vienodo ilgio: Cohens' d - 527 CpG pozicijos, rank biserial - 3483, o pagal vidurkių skirtumą - 3501. Vidurkių skirtumo efekto dydis rodo kitokią tendenciją - daugiausiai CpG pozicijų atviros jūrose regionuose, t.y. intergeniniuose regionuose arba pačių genų koduojančiose srityse, kas galbūt nebūtinai susiję su genų nutildymu ar įjungimu. Tokie skirtumai gali atsirasti dėl to, kad Cohend's d ir rank biserial yra standartizuoti efekto dydžiai, o vidurkių skirtumas - ne.
 
 **Metodas**: pagal kiekvieno efekto dydžio tipą atrinkti 10 CpG pozicijų su stipriausiai efekto dydžiais. Šioms grupėms sudaryti heatmap'ai.
 

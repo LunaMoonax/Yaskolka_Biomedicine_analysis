@@ -1,8 +1,8 @@
 # Antra užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
-setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -40,8 +40,8 @@ t18 <- sub("_.*", "", colnames(data[,data$timepoint == 18]))
 identical(t0, t18)
 
 # Apskaičiuojami p_values tiek t testo, tiek Vilkoksono testo metodais.
-p_values_ttest <- row_t_paired(data[,data$timepoint == 0], data[,data$timepoint == 18])
-p_values_wilcoxon <- row_wilcoxon_paired(data[,data$timepoint == 0], data[,data$timepoint == 18])
+p_values_ttest <- row_t_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
+p_values_wilcoxon <- row_wilcoxon_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
 
 # P reikšmių korekcija "fdr" metodu.
 p_values_ttest$pvalue <- p.adjust(p_values_ttest$pvalue, method = "fdr")
@@ -75,7 +75,7 @@ intersect(top10_ttest, top10_wilcoxon)
 top10_ttest_df <- stack(data[rownames(data) %in% top10_ttest,])
 top10_wilcoxon_df <- stack(data[rownames(data) %in% top10_wilcoxon,])
 
-# 10 patikimiausių citozinų grafiškai pagal t.testą
+# 10 patikimiausių cg pozicijų grafiškai pagal t.testą
 p1 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg26210521",], 
   mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg26210521", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
@@ -219,7 +219,7 @@ ggplot(p_values_ttest, aes(x=pvalue)) +
 # Statiškai patikimų (<0.05) p verčių kiekis pagal t testą.
 sum(p_values_ttest$pvalue < 0.05)
 
-# Kokią dalį visų CpG pozicijų sudaro statistiškai patikimi CpG.
+# Kokią dalį visų CpG pozicijų sudaro statistiškai patikimi CpG (procentais).
 sum(p_values_ttest$pvalue < 0.05) / length(rownames(data)) * 100
 
 ggplot(p_values_wilcoxon, aes(x=pvalue)) +
@@ -353,7 +353,7 @@ p_values_ttest$eff_val_cohensd <- mapply(function(i) {
 
 # Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai.
 # Išsaugoma [[1]] r reikšmė iš gauto rank_biserial objekto.
-p_values_wilcoxon$eff_val_r <- mapply(function(i) {
+p_values_ttest$eff_val_r <- mapply(function(i) {
   rank_biserial(data[i, data$timepoint == 18], data[i, data$timepoint == 0], paired = TRUE)[[1]]
 }, 1:nrow(data))
 
@@ -366,8 +366,7 @@ eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.03,]
 
 # Cohen's d ir r slenktis bus 0.5 (vidutinis efektas).
 eff_val_cohensd_strong <- significant_ttest[abs(significant_ttest$eff_val_cohensd) > 0.5,]
-significant_wilcoxon <- p_values_wilcoxon[p_values_wilcoxon$pvalue < 0.05,]
-eff_val_r_strong <- significant_wilcoxon[abs(significant_wilcoxon$eff_val_r) > 0.5,]
+eff_val_r_strong <- significant_ttest[abs(significant_ttest$eff_val_r) > 0.5,]
 
 # Į abiejus sąrašus pagal Cohen's d ir r efekto dydžius patenkančios CpG pozicijos.
 intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_r_strong))
@@ -381,7 +380,7 @@ length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff)))
 intersect(rownames(eff_val_r_strong), rownames(eff_val_diff))
 length(intersect(rownames(eff_val_r_strong), rownames(eff_val_diff)))
 
-# Kadangi pagal vidurkių skirtumo sąrašą su kitais sąrašais sutampa tik 7 CpG pozicijos,
+# Kadangi pagal vidurkių skirtumo sąrašą su kitais sąrašais sutampa tik 6 CpG pozicijos,
 # vidurkių skirtumo slenkstis sumažinamas.
 eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.01,]
 
@@ -389,7 +388,7 @@ eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.01,]
 intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff))
 length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff)))
 
-# Sutapimų skaičius padidėjo iki 361.
+# Sutapimų skaičius padidėjo iki 359.
 intersect(rownames(eff_val_r_strong), rownames(eff_val_diff))
 length(intersect(rownames(eff_val_r_strong), rownames(eff_val_diff)))
 
