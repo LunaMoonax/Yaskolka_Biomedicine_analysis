@@ -6,7 +6,6 @@ output:
   pdf_document: 
     latex_engine: xelatex
     fig_crop: false
-    keep_tex: true
 ---
 
 ```{r setup, include=FALSE}
@@ -22,8 +21,8 @@ library(knitr)
 
 ```{r p_values, echo=FALSE, warning=FALSE, message=FALSE}
 showtext::showtext_auto()
-setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -32,6 +31,7 @@ library(effsize)
 library(effectsize)
 library(gridExtra)
 library(qqman)
+library(pheatmap)
 
 invisible(Sys.setlocale("LC_ALL", "lt_LT.UTF-8"))
 
@@ -520,9 +520,9 @@ ggplot(diff_df, aes(x=relation_to_island)) +
   theme(plot.title = element_text(size = 10))
 ```
 
-Pagal vidutinį ir stiprų Cohen's d efekto dydį daugiausiai CpG pozicijų yra salose ir perpus mažiau atviros jūros regione ir pavieniai atvejai kitose srityse. Pagal vidutinį ir stiprų rank biserial efekto dydį beveik visos CpG pozicijos yra salose ir lyginant daug mažiau kituose regionuose. Didesni efekto dydžiai salose galėtų reikšti genų įjungimą/nutildymą. Reiktų atsižvelgti į tai, kad CpG pozicijų sąrašai ne vienodo ilgio: Cohens' d - 527 CpG pozicijos, rank biserial - 3483, o pagal vidurkių skirtumą - 3501. Vidurkių skirtumo efekto dydis rodo kitokią tendenciją - daugiausiai CpG pozicijų atviros jūrose regionuose, t.y. intergeniniuose regionuose arba pačių genų koduojančiose srityse, kas galbūt nebūtinai susiję su genų nutildymu ar įjungimu. Tokie skirtumai gali atsirasti dėl to, kad Cohend's d ir rank biserial yra standartizuoti efekto dydžiai, o vidurkių skirtumas - ne.
+Pagal vidutinį ir stiprų Cohen's d efekto dydį daugiausiai CpG pozicijų yra salose ir perpus mažiau atviros jūros regione ir pavieniai atvejai kitose srityse. Pagal vidutinį ir stiprų rank biserial efekto dydį beveik visos CpG pozicijos yra salose ir lyginant daug mažiau kituose regionuose. Didesni efekto dydžiai salose galėtų reikšti genų įjungimą/nutildymą. Reiktų atsižvelgti į tai, kad CpG pozicijų sąrašai ne vienodo ilgio: Cohens' d - 527 CpG pozicijos, rank biserial - 3483, o pagal vidurkių skirtumą - 3501. Vidurkių skirtumo efekto dydis rodo kitokią tendenciją - daugiausiai CpG pozicijų atviros jūrose regionuose, t.y. intergeniniuose regionuose arba pačių genų koduojančiose srityse, kas galbūt nebūtinai susiję su genų nutildymu ar įjungimu. Tačiau apie 500 CpG pozicijų patenka ir į salų regioną, panašus kiekis kaip ir Cohen's d atrinktų CpG pozicijų.
 
-**Metodas**: pagal kiekvieno efekto dydžio tipą atrinkti 10 CpG pozicijų su stipriausiais efekto dydžiais. Šioms grupėms sudaryti heatmap'ai.
+**Metodas**: pagal kiekvieno efekto dydžio tipą atrinktos 10 CpG pozicijų su stipriausiais efekto dydžiais. Šioms grupėms sudaryti heatmap'ai, o spalvos atvaizduotos taip, kad būtų rodomi metilinimo intensyvumo pasikeitimai konkrečiai CpG pozicijai. Šviesiai geltona spalva rodo metilinimo vidurkio reikšmę konkrečioje CpG pozicijoje.
 
 Tarp Cohen's d ir rank biserial grupių sutapusi CpG pozicija - cg01522525. Tarp vidurkių skirtumo ir Cohen's d grupių dar sutapo cg05001044 bei cg22519184, o tarp vidurkių skirtumo ir rank biserial nebuvo sutapusių CpG pozicijų.
 
@@ -549,23 +549,23 @@ eff_val_diff <- eff_val_diff[order(abs(eff_val_diff$mean.diff), decreasing = TRU
 
 ```{r heatmap1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
 # Heatmaps pagal didžiausius efekto dydžius.
-heatmap(data[rownames(data) %in% rownames(eff_val_cohensd_strong[1:10,]),])
+pheatmap(data[rownames(data) %in% rownames(eff_val_cohensd_strong[1:10,]),], show_colnames = FALSE, scale = "row")
 ```
 
-Šiame heatmap'e sunkiau įžvelgti susigrupavimus pagal spalvas, bet ties kiekviena CpG pozicija matoma daug skirtingų spalvų intensyvumų, kas reikštų skirtingus metilinimo įverčius ir didesnius efekto dydžius.
+cg22519184 ir cg05001044 yra labiausiai išsiskiriančios CpG pozicijos, nes čia matoma grupė pagal metilinimo lygio sumažėjimą. Kituose mėginiuose metilinimo intensyvumas išsibarstęs: yra ir mėginių, kuriuose metilinimas padidėjęs nuo vidurkio, bet ir sumažėjęs konkrečiai CpG pozicijai.
 
 ## Heatmap, kuriame CpG pozicijos atrinktos pagal didžiausius rank biserial efekto dydžius (top10).
 
 ```{r heatmap2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
-heatmap(data[rownames(data) %in% rownames(eff_val_r_strong[1:10,]),])
+pheatmap(data[rownames(data) %in% rownames(eff_val_r_strong[1:10,]),], show_colnames = FALSE, scale = "row")
 ```
 
-Šiame heatmap labiau matomas atsiskyrimas tarp modifikacijos įverčių padidėjimo/sumažėjimo. Pavyzdžiui, cg26210521 iš ankstesnio grafiko susijęs su modifikacijos įverčių vidurkio padidėjimu (kairėje pusėje silpnesnis metilinimas, dėšinėje stipresnis). Apatinė heatmap dalis labiau susijusi su modifikacijos įverčių vidurkių sumažėjimu (pvz. cg02364038, cg16872172 iš praeitų grafikų). Kairėje pusėje labiau pastebimi didesni įverčiai, o dešinėje mažesni. Dėl tokių skirtumų atsiranda dideli efekto dydžiai.
+Šiame heatmap'e metilinimo intensyvumų skirtumai yra ryškesni lyginant su Cohen's d efekto dydžiais, mažiau mėginių atitinka metilinimo vidutinę reikšmę, matoma daugiau pavienių išskirčių. Pirmose šešiose CpG pozicijose nuo viršaus matomas susigrupavimas tiek pagal metilinimo padidėjimą, tiek pagal sumažėjimą, tad tokie skirtumai lemia ir didelius efekto dydžius. Panaši situacija ir su keturiomis CpG pozicijomis apačioje, tiesiog mėginių susigrupavimas ne toks vientisas.
 
 ## Heatmap, kuriame CpG pozicijos atrinktos pagal didžiausius vidurkių skirtumus tarp grupių (top10).
 
 ```{r heatmap3, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
-heatmap(data[rownames(data) %in% rownames(eff_val_diff[1:10,]),])
+pheatmap(data[rownames(data) %in% rownames(eff_val_diff[1:10,]),], show_colnames = FALSE, scale = "row")
 ```
 
-Šiame heatmap CpG pozicijų modifikacijos įverčiai neturi tokių didelių modifikacijos skirtumų (vientisesnės spalvos). Išskirčių matoma cg02631651 ir cg03490014, cg26439324, kur yra aukštesnių modifikacijos įverčių. Tačiau skirtumai tarp grupių pakankami gauti didelius vidurkių skirtumus. Galbūt CpG pozicijų nesutapimas su kitų efektų dydžių grupėmis atsiranda dėl to, kad kitų efektų dydžių CpG pozicijų metilinimo skirtumai, nors ir didesni, kompensuoja vienas kitą, ir gali nepatekti į top 10 didžiausių vidurkių skirtumų sąrašą.
+Šiame heatmap'e matomi ryškesni atsiskyrimai nuo vidutinės metilinimo reikšmės, t.y. mažiau susimaišymo tarp metilinimo padidėjimo, ar sumažėjimo, CpG pozicijos linkusios labiau į vieną arba kitą (nors yra pozicijų kur toks intensyvumo maišymasis yra). Šiuo atveju daugiausiai mėginių susigrupavo pagal metilinimo intensyvumo sumažėjimą cg11894324, cg05001044, cg01070250, cg22519184, cg24159721, cg27559706. Taip pat matomos išskirtys CpG pozicijose cg11894324, cg22519184, cg02631651 ir cg03490014. Daugiau metilinimo padidėjimo/sumažėjimo atvejų pastebima viršutiniuose dviejuose mėginiuose ir apatiniuose dviejuose mėginiuose.
