@@ -1,4 +1,4 @@
-# Antra užduotis
+# Trečia užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
 #setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
@@ -78,7 +78,7 @@ top10_wilcoxon_df <- stack(data[rownames(data) %in% top10_wilcoxon,])
 
 # 10 patikimiausių cg pozicijų grafiškai pagal t.testą
 p1 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg26210521",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg26210521", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -87,7 +87,7 @@ p1 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg26210521",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p2 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg10992198",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg10992198", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -98,7 +98,7 @@ p2 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg10992198",],
 grid.arrange(p1, p2, nrow = 1)
 
 p3 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg16872172",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg16872172", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -107,7 +107,7 @@ p3 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg16872172",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p4 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg13315471",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg13315471", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -127,7 +127,7 @@ p5 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg07769732",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p6 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg27481720",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg27481720", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -138,7 +138,7 @@ p6 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg27481720",],
 grid.arrange(p5, p6,nrow = 1)
 
 p7 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg01522525",], 
-  mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg01522525", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -167,7 +167,7 @@ p9 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg20903764",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p10 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg04272309",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg04272309", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -181,7 +181,7 @@ grid.arrange(p9, p10, nrow = 1)
 setdiff(top10_wilcoxon, top10_ttest)
 
 p11 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg17376730",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg17376730", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -190,7 +190,7 @@ p11 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg17376730",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p12 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg09145071",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg09145071", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) + 
@@ -199,7 +199,7 @@ p12 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg09145071",],
   scale_fill_manual(values = c("darkolivegreen", "slateblue"))
 
 p13 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg02364038",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
+              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
   labs(title = "cg02364038", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
   theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
   geom_boxplot(alpha = 0.2) +
@@ -306,144 +306,3 @@ ggplot(chr19, aes(x = pos_mb, y = logp)) +
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
-
-# 6. GO analizė
-
-# Naudosime GOrilla internetinį įrankį
-
-# Apaskaičiuojame vidurkių skirtumą (T18 - T0)
-# Vidurkius panaudosime skirstant į grupes.
-mean_diff <- rowMeans(data[,data$timepoint == 18]) - rowMeans(data[,data$timepoint == 0])
-
-# Pasirenkame tik patikimus skirtumus
-significant_cpg <- p_values_ttest$pvalue < 0.05
-
-# Padalijame į grupes pagal metilinimą - kur viena grupė labiau metilinta už kitą ir atvirkščiai.
-hyper <- significant_cpg & mean_diff > 0   # T18 > T0
-hypo  <- significant_cpg & mean_diff < 0   # T18 < T0
-
-# Funkcija, kuri panaikins kablaitaškius ir paruoš pavadinimus pagal reikiamą formatą analizei
-split_genes <- function(gene_vector) {
-  genes <- unlist(strsplit(gene_vector, ";"))
-  genes <- genes[genes != ""]
-  unique(genes)
-}
-
-# Išrenkame visų unikalių genų pavadinimus
-genes_background <- split_genes(data@ucsc_refgene_name)
-
-# Padaliname unikalius genų pavadinimus pagal sukurtas grupes
-genes_hyper <- split_genes(data@ucsc_refgene_name[hyper])
-genes_hypo  <- split_genes(data@ucsc_refgene_name[hypo])
-
-# Išsaugome į failus (GO analize atliksime puslapyje)
-writeLines(genes_hyper, "genes_hyper.txt")
-writeLines(genes_hypo, "genes_hypo.txt")
-writeLines(genes_background, "genes_background.txt")
-
-# Sipriausių efekto dydžių apžvalginė analizė
-# Vienas iš būdų apibūdinti efekto dydį - Cohen's d.
-# Jis apibrėžia efekto dydį kaip vidurkių skirtumą standartinio nuokrypio vienetais.
-
-# Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai ir išsaugoma [[3]] - Cohen's d reikšmė.
-p_values_ttest$eff_val_cohensd <- mapply(function(i) {
-  cohen.d(data[i, data$timepoint == 18], data[i, data$timepoint == 0], paired = TRUE)[[3]]
-}, 1:nrow(data))
-
-# Kitas efekto dydis: r - koreliacija apskaičiuojama rangais panašiai kaip Wilcoxon suporuotų duomenų testu.
-
-# Funkcija pritaikoma kiekvienai matricų atitinkamų eilučių porai.
-# Išsaugoma [[1]] r reikšmė iš gauto rank_biserial objekto.
-p_values_ttest$eff_val_r <- mapply(function(i) {
-  rank_biserial(data[i, data$timepoint == 18], data[i, data$timepoint == 0], paired = TRUE)[[1]]
-}, 1:nrow(data))
-
-# Atrenkamos tik CpG pozicijos patikimos pagal p vertę. 
-significant_ttest <- p_values_ttest[p_values_ttest$pvalue < 0.05,]
-# Peržiūrimos didžiausias vidurkių skirtumas ir pagal tai nustatomas slenkstis.
-max(abs(significant_ttest$mean.diff))
-# Didžiausias skirtumas 0.06465848, todėl bus naudojama apie pusė šio skirtumo (0.03).
-eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.03,]
-
-# Cohen's d ir r slenktis bus 0.5 (vidutinis efektas).
-eff_val_cohensd_strong <- significant_ttest[abs(significant_ttest$eff_val_cohensd) > 0.5,]
-eff_val_r_strong <- significant_ttest[abs(significant_ttest$eff_val_r) > 0.5,]
-
-# Į abiejus sąrašus pagal Cohen's d ir r efekto dydžius patenkančios CpG pozicijos.
-intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_r_strong))
-length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_r_strong)))
-
-# Į abiejus sąrašus pagal Cohen's d ir vidurkių skirtumo efekto dydžius patenkančios CpG pozicijos.
-intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff))
-length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff)))
-
-# Į abiejus sąrašus pagal r ir vidurkių skirtumo efekto dydžius patenkančios CpG pozicijos.
-intersect(rownames(eff_val_r_strong), rownames(eff_val_diff))
-length(intersect(rownames(eff_val_r_strong), rownames(eff_val_diff)))
-
-# Kadangi pagal vidurkių skirtumo sąrašą su kitais sąrašais sutampa tik 6 CpG pozicijos,
-# vidurkių skirtumo slenkstis sumažinamas.
-eff_val_diff <- significant_ttest[abs(significant_ttest$mean.diff) > 0.01,]
-
-# Sutapimų skaičius padidėjo iki 124.
-intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff))
-length(intersect(rownames(eff_val_cohensd_strong), rownames(eff_val_diff)))
-
-# Sutapimų skaičius padidėjo iki 359.
-intersect(rownames(eff_val_r_strong), rownames(eff_val_diff))
-length(intersect(rownames(eff_val_r_strong), rownames(eff_val_diff)))
-
-# Toliau bus pavaizduojama kiek CpG pozicijų pagal vidutinius ir stiprius efekto dydžius patenka į skirtingus regionus.
-# Susidarome dataframe grafikams.
-cohensd_df <- rowanns(data[rownames(data) %in% rownames(eff_val_cohensd_strong),])
-r_df <- rowanns(data[rownames(data) %in% rownames(eff_val_r_strong),])
-diff_df <- rowanns(data[rownames(data) %in% rownames(eff_val_diff),])
-
-ggplot(cohensd_df, aes(x=relation_to_island)) +
-  labs(title = "CpG pasiskirstymas tarp regionų (atrinktos pagal vidutinį Cohen's d efekto dydį)", x = "Regionas", y = "CpG pozicijų kiekis regione") +
-  theme(plot.title = element_text(hjust=0.5, size=12)) +
-  geom_bar(fill = "slateblue")
-
-ggplot(r_df, aes(x=relation_to_island)) +
-  labs(title = "CpG pasiskirstymas tarp regionų (atrinktos pagal vidutinį r (biserial rank) efekto dydį)", x = "Regionas", y = "CpG pozicijų kiekis regione") +
-  theme(plot.title = element_text(hjust=0.5, size=12)) +
-  geom_bar(fill = "slateblue")
-
-ggplot(diff_df, aes(x=relation_to_island)) +
-  labs(title = "CpG pasiskirstymas tarp regionų (atrinktos pagal vidurkių skirtumo (>0.01) efekto dydį)", x = "Regionas", y = "CpG pozicijų kiekis regione") +
-  theme(plot.title = element_text(hjust=0.5, size=12)) +
-  geom_bar(fill = "slateblue")
-
-# Apskaičiavimas kiek CpG pozicijų patenka į kiekvieną sąrašą.
-
-length(rownames(eff_val_cohensd_strong))
-length(rownames(eff_val_r_strong))
-length(rownames(eff_val_diff))
-
-# Rikiavimas pagal efekto dydžių stiprumą (nuo didžiausio efekto dydžio).
-eff_val_cohensd_strong <- eff_val_cohensd_strong[order(abs(eff_val_cohensd_strong$eff_val_cohensd), decreasing = TRUE),]
-rownames(eff_val_cohensd_strong[1:10,])
-
-eff_val_r_strong <- eff_val_r_strong[order(abs(eff_val_r_strong$eff_val_r), decreasing = TRUE),]
-rownames(eff_val_r_strong[1:10,])
-
-eff_val_diff <- eff_val_diff[order(abs(eff_val_diff$mean.diff), decreasing = TRUE),]
-rownames(eff_val_diff[1:10,])
-
-# Sutapimai tarp top 10 didžiausių efekto dydžių (pagal skirtingus efekto dydžių tipus).
-intersect(rownames(eff_val_cohensd_strong[1:10,]), rownames(eff_val_r_strong[1:10,]))
-# cg01522525
-
-intersect(rownames(eff_val_cohensd_strong[1:10,]), rownames(eff_val_diff[1:10,]))
-# cg05001044 ir cg22519184
-
-intersect(rownames(eff_val_r_strong[1:10,]), rownames(eff_val_diff[1:10,]))
-# nėra bendrų CpG pozicijų.
-
-# Heatmaps pagal didžiausius efekto dydžius.
-# Pasirinkta scale 'row', kad būtų atsižvelgta į kiekvienos CpG pozicijos vidurkį ir
-# tuomet spalvos atvaizduoja tik tos CpG pozicijos metilinimo intensyvumų skirtumus.
-# Dėl tvarkingumo mėginių pavadinimai nerodomi.
-pheatmap(data[rownames(data) %in% rownames(eff_val_cohensd_strong[1:10,]),], show_colnames = FALSE, scale = "row")
-pheatmap(data[rownames(data) %in% rownames(eff_val_r_strong[1:10,]),], show_colnames = FALSE, scale = "row")
-pheatmap(data[rownames(data) %in% rownames(eff_val_diff[1:10,]),], show_colnames = FALSE, scale = "row")
