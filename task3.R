@@ -12,10 +12,115 @@ library(effectsize)
 library(gridExtra)
 library(qqman)
 library(pheatmap)
+library(limma)
 
 data <- readRDS("yaskolka.rds")
 
-# 1. Grupių palyginimas naudojant statistinį testą.
+# 1. Raskite senėjimo tendencijas
+
+# Pasitikriname galimus kokybinius kintamuosius, kuriuos būtų galima įtraukti į modelį
+# Pagrinde ieškome tokių, kuriuose būtų variabilumas
+head(colanns(data))
+table(data$celltype)
+table(data$diagnosis)
+table(data$diet)
+table(data$sex)
+table(data$stimulus)
+table(data$timepoint)
+table(data$timepoint, data$stimulus)
+
+# Naudojame limma paketą, kuris yra optimizuotas tiesinės regresijos modeliams taikyti
+# didelėms genomikos matricoms. Viduje naudoja tą patį tiesinį regresijos modelį kaip lm(),
+# tačiau yra žymiai greitesnis, nes apdoroja visas CpG pozicijas vienu metu,
+# o ne po vieną cikle.
+
+# Sukuriame design matricą su visais kintamaisiais:
+# age - mus dominantis kintamasis (senėjimo efektas)
+# sex, diet, stimulus, timepoint - kontroliniai kintamieji,
+# kuriuos kontroliuojame.
+design <- model.matrix(~ age + sex + diet + stimulus + timepoint, data = colanns(data))
+
+# Pritaikome tiesinį regresijos modelį visoms CpG pozicijoms vienu metu.
+fit <- lmFit(as.matrix(data), design)
+
+# Ištraukiame amžiaus beta koeficientus
+betas_age <- fit$coefficients[,"age"]
+# P-vertes skaičiuojame iš t-statistikos ir laisvės laipsnių
+t_stat <- fit$coefficients[,"age"] / fit$stdev.unscaled[,"age"] / fit$sigma
+pvalues <- 2 * pt(-abs(t_stat), df = fit$df.residual)
+
+# P-verčių korekcija FDR metodu
+pvalues_adj <- p.adjust(pvalues, method = "fdr")
+
+# Kiek citozinų rodo su amžiumi susijusias tendencijas?
+significant <- pvalues_adj < 0.05
+sum(significant)
+sum(significant) / nrow(data) * 100
+
+# Kokios modifikavimo kryptys? (hipermetilinimas vs hipometilinimas)
+sum(betas_age[significant] > 0)   # hipermetilinta
+sum(betas_age[significant] < 0)   # hipometilinta
+
+# Kokiuose genominiuose kontekstuose šie citozinai randami?
+table(rowanns(data[significant,])$relation_to_island)
+table(unlist(strsplit(rowanns(data[significant,])$ucsc_refgene_group, ";")))
+
+# Volcano grafikas
+# Susidarome dataframe reikalingą grafikui atvaizduoti
+volcano_df <- data.frame(
+  beta = betas_age,
+  logp = -log10(pvalues_adj)
+)
+# Suteikiame pavadinimus kategorijomis, kad grafike matytusi
+volcano_df$category <- "Nereikšmingas"
+volcano_df$category[pvalues_adj < 0.05 & betas_age > 0] <- "Hipermetilinta"
+volcano_df$category[pvalues_adj < 0.05 & betas_age < 0] <- "Hipometilinta"
+
+# Piešiame plotą
+ggplot(volcano_df, aes(x = beta, y = logp, color = category)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_color_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue", "Nereikšmingas" = "grey70")) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+  labs(
+    title = "Senėjimo tendencijos (Volcano grafikas)",
+    x = "Beta koeficientas (amžiaus efektas per metus)",
+    y = expression(-log[10](p[adj])),
+    color = "Kategorija"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Genominio konteksto stulpelinė diagrama su kryptimis
+# Susidarome dataframe reikalingą grafikui atvaizduoti
+sig_context <- data.frame(
+  region = rowanns(data[significant,])$relation_to_island,
+  direction = ifelse(betas_age[significant] > 0, "Hipermetilinta", "Hipometilinta")
+)
+# Piešiame plotą
+ggplot(sig_context, aes(x = region, fill = direction)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue")) +
+  labs(
+    title = "Su amžiumi susijusių CpG pasiskirstymas pagal genominį kontekstą",
+    x = "Regionas", y = "CpG kiekis", fill = "Kryptis"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Top CpG scatter plotas — stipriausias amžiaus ir metilinimo ryšys
+top1 <- which.min(pvalues_adj)
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top1,])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", rownames(data)[top1]),
+    x = "Amžius", y = "Metilinimas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#1. Grupių palyginimas naudojant statistinį testą.
 # Apskaičiuosime p-vertes DNR modifikacijoms lygindami grupes pradžioje tyrimo (T1)
 # ir tyrimo pabaigoje po intervencijos (T18).
 
