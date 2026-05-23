@@ -129,10 +129,10 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top1,])
 # 2. Patikimiausių skirtumų profiliai.
 
 # Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
-pvalues_adj <- sort(pvalues_adj)
+sorted_pvalues_adj <- sort(pvalues_adj)
 
 # Atrenkame 10 mažiausią p-vertę turinčių citozinų.
-top10_CPGs <- names(pvalues_adj[1:10])
+top10_CPGs <- names(sorted_pvalues_adj[1:10])
 top10_CPGs
 
 # Tai citozinai: cg16867657, cg17268658, cg21572722, cg22454769, cg06639320,
@@ -277,7 +277,7 @@ manhattan_df <- data.frame(
   SNP = rownames(data),
   CHR = as.numeric(gsub("chr", "", data@chr)),
   BP = data@pos,
-  P = p_values_ttest$pvalue
+  P = pvalues_adj
 )
 
 # Pašaliname tuščias reikšmes, kad plotas būtų atvaizduotas tiksliai
@@ -290,24 +290,70 @@ manhattan(manhattan_df, main = "Manhattan grafikas (visos chromosomos)",
 # Dauguma taškų yra patikimi (virš raudonos linijos, kuri žymi p=0.05). Kuo aukštesnis taškas
 # tuo patikimesnis skirtumas (p rekšmė mažiausia). 
 # Grafike dauguma chromosomų atrodo panašios, ir itin didelių skirtumų sunku rasti.
-# Pasirenkame išsiskiriančia 19 chromosoma - palyginus su kitomis chromosomomis
+# Pasirenkame išsiskiriančia 17 chromosoma - palyginus su kitomis chromosomomis
 # ji turi daugiausiai taškų, kurie yra aukštai (ne tik pavienį tašką).
 
 # Kadangi norime atvaizduoti tik vieną chromosomą ir suprantamai, čia pasinaudosime ggplot
 # Paruošiame duomenis grafikui, logoritmuojame ir konvertuojame pozicijas į megabazes (Mb)
-chr19 <- manhattan_df[manhattan_df$CHR == 19, ]
-chr19$logp <- -log10(chr19$P)
-chr19$pos_mb <- chr19$BP / 1e6
+chr17 <- manhattan_df[manhattan_df$CHR == 17, ]
+chr17$logp <- -log10(chr17$P)
+chr17$pos_mb <- chr17$BP / 1e6
 
-# Braižome manhattan plotą 19 chromosomai
-ggplot(chr19, aes(x = pos_mb, y = logp)) +
+# Braižome manhattan plotą 17 chromosomai
+ggplot(chr17, aes(x = pos_mb, y = logp)) +
   geom_point(size = 1, alpha = 0.7, color = "steelblue") +
   geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
-  scale_x_continuous(breaks = seq(0, 60, by = 5)) +
+  scale_x_continuous(breaks = seq(0, 80, by = 5)) +
   labs(
-    title = "Manhattan grafikas (19 chromosoma)",
+    title = "Manhattan grafikas (17 chromosoma)",
     x = "Genominė pozicija (Mb)",
     y = expression(-log[10](p))
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+# 5. Horvath epigenetinis laikrodis
+DNAm <- read.csv("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/13059_2013_3156_MOESM3_ESM.csv", skip = 2)
+
+length(DNAm$CpGmarker)
+# Kartu su Intercept yra 353 CpG markeriai epigenetiniam amžiui nustatyti.
+
+age_data <- data[rownames(data) %in% DNAm$CpGmarker,]
+dim(age_data)
+# Duomenyse atrasti 334 CpG markeriai iš 353 markerių.
+
+# Išsisaugome intercept reikšmę.
+intercept <- DNAm$CoefficientTraining[1]
+
+# Pasiliekame tik tuos epigenetinio laikrodžio CpGs, kurie buvo rasti duomenyse.
+# Perrikiuojame age data pagal CpGmarker, kad modifikacijos įverčiai būtų padauginti iš teisingų koeficientų.
+DNAm_CPGs <- DNAm[DNAm$CpGmarker %in% rownames(age_data),]
+age_data <- age_data[DNAm_CPGs$CpGmarker,]
+rownames(age_data) == DNAm_CPGs$CpGmarker
+length(DNAm_CPGs$CpGmarker)
+
+# Padauginame koeficientus atitinkamo CpG iš jo modifikacijos įverčio ir sudedame į galutinę tiriamojo sumą.
+epigenetic_age <- colSums(age_data * DNAm_CPGs$CoefficientTraining) + intercept
+
+# Norime pridėti efektus ir tų CpG, kurių nebuvo duomenyse.
+# Todėl padauginsime nepanaudotų CpG medianas iš jų koeficiento.
+DNAm_CPGs_not_found <- DNAm[!DNAm$CpGmarker %in% rownames(age_data),]
+
+# Pašaliname intercept, kad nesikartotų.
+DNAm_CPGs_not_found <- DNAm_CPGs_not_found[-1, ]
+
+# Dauginame CpG medianas iš atitinkamo jų koeficiento ir gauname galutinę sumą jų efekto.
+coeff <- sum(DNAm_CPGs_not_found$CoefficientTraining * DNAm_CPGs_not_found$medianByCpG)
+epigenetic_age_w_coeff <- epigenetic_age + coeff
+
+# Horvath apibrėžta gautų įverčių transformavimo funkcija (supplementary failuose).
+anti.trafo <- function(x,adult.age=20) { 
+   if(x<0) {
+     (1+adult.age)*exp(x)-1
+   } else {
+     (1+adult.age)*x+adult.age 
+   }
+}
+
+# Kiekvienam tiriamajam pritaikome amžiaus transformaciją.
+epigenetic_age_w_coeff <- sapply(epigenetic_age_w_coeff, anti.trafo)
