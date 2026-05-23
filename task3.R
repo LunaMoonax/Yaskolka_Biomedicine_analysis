@@ -113,19 +113,6 @@ ggplot(sig_context, aes(x = region, fill = direction)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-# Top CpG scatter plotas — stipriausias amžiaus ir metilinimo ryšys
-top1 <- which.min(pvalues_adj)
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top1,])),
-       aes(x = age, y = methylation)) +
-  geom_point(alpha = 0.5, color = "steelblue") +
-  geom_smooth(method = "lm", color = "red") +
-  labs(
-    title = paste("Metilinimo priklausomybė nuo amžiaus:", rownames(data)[top1]),
-    x = "Amžius", y = "Metilinimas"
-  ) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
 # 2. Patikimiausių skirtumų profiliai.
 
 # Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
@@ -357,3 +344,45 @@ anti.trafo <- function(x,adult.age=20) {
 
 # Kiekvienam tiriamajam pritaikome amžiaus transformaciją.
 epigenetic_age_w_coeff <- sapply(epigenetic_age_w_coeff, anti.trafo)
+epigenetic_age <- sapply(epigenetic_age, anti.trafo)
+
+# Sudarome data frames grafikams: realus amžius ir epigentinis amžius su papildomais CpG
+age_df_1 <- data.frame(
+  ages = c(age_data$age, epigenetic_age_w_coeff),
+  groups = c(rep("real", length(age_data$age)),
+            rep("epi", length(epigenetic_age_w_coeff))),
+  cols = colnames(age_data)
+)
+
+# Realus amžius ir epigentinis amžius be papildomų CpG
+age_df_2 <- data.frame(
+  ages = c(age_data$age, epigenetic_age),
+  groups = c(rep("real", length(age_data$age)),
+             rep("epi", length(epigenetic_age))),
+  cols = colnames(age_data)
+)
+
+# Dėl tvarkingumo pašalinami mėginių vardai.
+ggplot(age_df_1, aes(x=cols,y=ages,color=groups,group=cols)) +
+  labs(title = "Tikras amžius vs. epigenetinis amžius (su papildomais CpG)", x = "Tiriamieji", y = "Amžius") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  scale_color_manual(values = c("real" = "red", "epi" = "blue"),
+                     labels = c("real" = "realus amžius", "epi" = "epigenetinis amžius"),
+                     name = "Amžiaus kategorija") +
+  theme(axis.text.x = element_blank())
+
+ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
+  labs(title = "Tikras amžius vs. epigenetinis amžius (be papildomų CpG)", x = "Tiriamieji", y = "Amžius") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  scale_color_manual(values = c("real" = "red", "epi" = "blue"),
+                     labels = c("real" = "realus amžius", "epi" = "epigenetinis amžius"),
+                     name = "Amžiaus kategorija") +
+  theme(axis.text.x = element_blank())
+
+# Vidutiniai skirtumai tarp epigenetinio amžiaus ir realaus amžiaus.
+mean(epigenetic_age_w_coeff - age_data$age)
+mean(epigenetic_age - age_data$age)
