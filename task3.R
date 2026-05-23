@@ -16,6 +16,12 @@ library(limma)
 
 data <- readRDS("yaskolka.rds")
 
+# Pirmiausia, pašalinami mėginiai nustatyti išskirtimis.
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
+
+data <- data[,!colnames(data) %in% outlier_names]
+
 # 1. Raskite senėjimo tendencijas
 
 # Pasitikriname galimus kokybinius kintamuosius, kuriuos būtų galima įtraukti į modelį
@@ -120,255 +126,149 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top1,])
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-#1. Grupių palyginimas naudojant statistinį testą.
-# Apskaičiuosime p-vertes DNR modifikacijoms lygindami grupes pradžioje tyrimo (T1)
-# ir tyrimo pabaigoje po intervencijos (T18).
-
-# Pirmiausia, pašalinami mėginiai nustatyti išskirtimis praeitoje užduotyje.
-outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
-                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
-
-data <- data[,!colnames(data) %in% outlier_names]
-
-# Duomenų matrica atskiriama į dvi dalis pagal tai, kokiam paėmimo laikotarpiui priklauso mėginiai.
-# Statistiniams testams bus naudojamas 'paired' variantas, kadangi mėginiai poromis susiję:
-# tas pats donoras duoda mėginį tyrimo pradžioje ir jo pabaigoje.
-# Todėl reiktų patikrinti ar mėginiai bus teisingai suporuojami 'paired' testuose.
-
-# Ištraukiami tiriamųjų numeriai iš stulpelių pavadinimų.
-colnames(data[,data$timepoint == 0])
-colnames(data[,data$timepoint == 18])
-
-t0 <- sub("_.*", "", colnames(data[,data$timepoint == 0]))
-t18 <- sub("_.*", "", colnames(data[,data$timepoint == 18]))
-
-# Patikrinimas ar sutampa abiejų grupių tiriamųjų numeriai bei jų eilės tvarka.
-identical(t0, t18)
-
-# Apskaičiuojami p_values tiek t testo, tiek Vilkoksono testo metodais.
-p_values_ttest <- row_t_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
-p_values_wilcoxon <- row_wilcoxon_paired(data[,data$timepoint == 18], data[,data$timepoint == 0])
-
-# P reikšmių korekcija "fdr" metodu.
-p_values_ttest$pvalue <- p.adjust(p_values_ttest$pvalue, method = "fdr")
-p_values_wilcoxon$pvalue <- p.adjust(p_values_wilcoxon$pvalue, method = "fdr")
-
-# Efekto dydis prieinamas p_values_ttest$mean.diff
-
 # 2. Patikimiausių skirtumų profiliai.
 
-# Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių)
-p_values_ttest_ordered <- p_values_ttest[order(p_values_ttest$pvalue),]
-p_values_wilcoxon_ordered <- p_values_wilcoxon[order(p_values_wilcoxon$pvalue),]
+# Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
+pvalues_adj <- sort(pvalues_adj)
 
-# Pagal abu testus atrenkami 10 mažiausią p-vertę turinčių cg pozicijų.
-top10_ttest <- rownames(p_values_ttest_ordered[1:10,])
-top10_wilcoxon <- rownames(p_values_wilcoxon_ordered[1:10,])
+# Atrenkame 10 mažiausią p-vertę turinčių citozinų.
+top10_CPGs <- names(pvalues_adj[1:10])
+top10_CPGs
 
-top10_ttest
-top10_wilcoxon
+# Tai citozinai: cg16867657, cg17268658, cg21572722, cg22454769, cg06639320,
+# cg24724428, cg08097417, cg07553761, cg26947034, cg17403084.
 
-# Pagal t testą gaunamos cg pozicijos: "cg26210521", "cg10992198", "cg16872172", "cg13315471", "cg07769732",
-# "cg27481720", "cg01522525", "cg10509965", "cg20903764", "cg04272309"
+# Top 10 CpG scatter plot'ai — stipriausi amžiaus ir metilinimo ryšiai pagal pvalue.
 
-# Pagal Vilkoksono testą gaunamos cg pozicijos: "cg26210521", "cg16872172", "cg10992198", "cg13315471", 
-# "cg01522525", "cg17376730", "cg27481720", "cg09145071", "cg20903764", "cg02364038"
-
-intersect(top10_ttest, top10_wilcoxon)
-# Pagal abu testus sutampa 7 pozicijų pavadinimai (nebūtinai iš eilės).
-
-# Susikuriame df objektus iš atrinktų cg pozicijų.
-top10_ttest_df <- stack(data[rownames(data) %in% top10_ttest,])
-top10_wilcoxon_df <- stack(data[rownames(data) %in% top10_wilcoxon,])
-
-# 10 patikimiausių cg pozicijų grafiškai pagal t.testą
-p1 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg26210521",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg26210521", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p2 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg10992198",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg10992198", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p1, p2, nrow = 1)
-
-p3 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg16872172",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg16872172", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p4 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg13315471",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg13315471", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p3, p4,nrow = 1)
-
-p5 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg07769732",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg07769732", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p6 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg27481720",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg27481720", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p5, p6,nrow = 1)
-
-p7 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg01522525",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg01522525", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p8 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg10509965",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg10509965", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p7, p8, nrow = 1)
-
-p9 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg20903764",], 
-             mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg20903764", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p10 <- ggplot(top10_ttest_df[top10_ttest_df$name == "cg04272309",], 
-              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg04272309", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p9, p10, nrow = 1)
-
-# 3 nesutapusios CpG pozicijos Vilksono teste lyginant su t testu.
-setdiff(top10_wilcoxon, top10_ttest)
-
-p11 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg17376730",], 
-              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg17376730", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p12 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg09145071",], 
-              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg09145071", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) + 
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-p13 <- ggplot(top10_wilcoxon_df[top10_wilcoxon_df$name == "cg02364038",], 
-              mapping=aes(x=as.factor(timepoint), y=value, color=as.factor(timepoint), fill = as.factor(timepoint))) +
-  labs(title = "cg02364038", x = "Laiko momentas tyrime", y = "Modifikacijos įvertis") +
-  theme(plot.title = element_text(hjust=0.5, size=12), legend.position = "none") +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(width = 0.3, alpha = 0.8) +
-  scale_color_manual(values = c("darkolivegreen", "slateblue")) +
-  scale_fill_manual(values = c("darkolivegreen", "slateblue"))
-
-grid.arrange(p11, p12, p13, nrow = 1)
-
-# 3. P-verčių histograma.
-
-# P verčių histogramos pagal t testą ir Vilkoksono testą.
-ggplot(p_values_ttest, aes(x=pvalue)) +
-  labs(title = "T testo p verčių pasiskirstymas", x = "p reikšmė", y = "Kiekis") +
-  theme(plot.title = element_text(hjust=0.5, size=12)) +
-  geom_histogram(binwidth=0.01, fill = "darkolivegreen")
-
-# Statiškai patikimų (<0.05) p verčių kiekis pagal t testą.
-sum(p_values_ttest$pvalue < 0.05)
-
-# Kokią dalį visų CpG pozicijų sudaro statistiškai patikimi CpG (procentais).
-sum(p_values_ttest$pvalue < 0.05) / length(rownames(data)) * 100
-
-ggplot(p_values_wilcoxon, aes(x=pvalue)) +
-  labs(title = "Vilkoksono testo p verčių pasiskirstymas", x = "p reikšmė", y = "Kiekis") +
-  theme(plot.title = element_text(hjust=0.5, size=12)) +
-  geom_histogram(binwidth=0.01, fill = "darkolivegreen")
-
-# Statiškai patikimų (<0.05) p verčių kiekis pagal Vilkoksono testą.
-sum(p_values_wilcoxon$pvalue < 0.05)
-
-# Kokią dalį visų CpG pozicijų sudaro statistiškai patikimi CpG.
-sum(p_values_wilcoxon$pvalue < 0.05) / length(rownames(data)) * 100
-
-# 4. Volcano grafikas
-
-# Sukuriame duomenų lentelę, skirtą volcano grafikui pavaizduoti
-volcano_df <- data.frame(
-  mean_diff = p_values_ttest$mean.diff,
-  logp = -log10(p_values_ttest$pvalue)
-)
-
-# Tam, kad grafikas būtų aiškesnis ir duotų daugiau informacijos, duomenis paskirstome kategorijomis
-# Visus duomenis kol kas priskiriame nereikšmingus.
-# Reikšmingi tampa tie, kurių p_value dydis yra mažesnis negu 0.05 ir atitinkamai efekto dydis
-# priskiriamas hipermetilintai, arba hipometilintam.
-volcano_df$category <- "Nereikšmingas"
-volcano_df$category[p_values_ttest$pvalue < 0.05 & volcano_df$mean_diff > 0.01] <- "Hipermetilinta"
-volcano_df$category[p_values_ttest$pvalue < 0.05 & volcano_df$mean_diff < -0.01] <- "Hipometilinta"
-
-# Pavaizduojame volcano grafiką
-ggplot(volcano_df, aes(x = mean_diff, y = logp, color = category)) +
-  geom_point(size = 0.5, alpha = 0.5) +
-  scale_color_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue", "Nereikšmingas" = "grey70")) +
-  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
-  geom_vline(xintercept = c(-0.01, 0.01), linetype = "dashed", color = "black") +
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[1],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
   labs(
-    title = "Volcano grafikas",
-    x = "Vidurkių skirtumas (T18 - T0)",
-    y = expression(-log[10](p[adj])),
-    color = "Kategorija"
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[1]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[2],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[2]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[3],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[3]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[4],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[4]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[5],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[5]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[6],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[6]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[7],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[7]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[8],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[8]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[9],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[9]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[10],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[10]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# 3. P-verčių histograma.
+
+# P verčių histograma.
+ggplot(data.frame(pvalue = pvalues_adj), aes(x=pvalue)) +
+  labs(title = "P verčių pasiskirstymas", x = "P vertė", y = "Kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_histogram(binwidth=0.01, fill = "darkolivegreen")
+
+# Statistiškai patikimų citozinų dalis apskaičiuota anksčiau.
 
 # 5. Manhattan grafikas
 
