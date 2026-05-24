@@ -501,7 +501,7 @@ Iš grafiko matyti, kad maždaug pusei tiriamųjų epigenetinio amžiaus skirtum
 
 **Metodas**: atrinkti tiriamieji, kurių epigenetinis amžius sumažėjo tyrimo eigoje ir histogramose pavaizduotos šiems tiriamiesiems būdingos charakteristikos: dietos tipas, fizinio aktyvumo (ne)buvimas, lytis.
 
-```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7, fig.caption="Histogramos}
+```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
 # Iš grafiko matyti, kad kai kurių tiriamųjų epigenetinis amžius tyrimo eigoje sumažėjo.
 # Atsirenkame epigenetinius amžius, apskaičiuojame jų skirtumą tyrimo pradžioje ir pabaigoje,
 # šiuos skirtumus priskiriame tiriamiesiems.
