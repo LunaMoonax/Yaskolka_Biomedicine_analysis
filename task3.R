@@ -530,3 +530,131 @@ g3 <- ggplot(age_factors, aes(x=sex)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 grid.arrange(g1, g2, g3)
+
+# Amžiaus pagreitis pagal visus laikrodžius ir intervencijos grupes
+
+# Skaičiuojame amžiaus pagreitį kiekvienam laikrodžiui.
+# Amžiaus pagreitis = epigenetinis amžius - chronologinis amžius.
+# Jei teigiamas - žmogus "senesnis" epigenetiškai nei chronologiškai.
+# Jei neigiamas - žmogus "jaunesnis" epigenetiškai.
+
+clocks_df$accel_Horvath <- clocks_df$Horvath - clocks_df$real_age
+clocks_df$accel_Hannum <- clocks_df$Hannum - clocks_df$real_age
+clocks_df$accel_Levine <- clocks_df$Levine - clocks_df$real_age
+clocks_df$accel_skinHorvath <- clocks_df$skinHorvath - clocks_df$real_age
+
+# Pertvarkome į ilgą formatą, kad galėtume naudoti facet_wrap
+accel_long <- pivot_longer(clocks_df, 
+                           cols = c(accel_Horvath, accel_Hannum, accel_Levine, accel_skinHorvath),
+                           names_to = "clock", values_to = "acceleration",
+                           names_prefix = "accel_")
+
+# Boxplot: amžiaus pagreitis pagal dietą kiekvienam laikrodžiui,
+# spalvinant pagal laiko momentą (T0 vs T18)
+ggplot(accel_long, aes(x = diet, y = acceleration, fill = timepoint)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreitis pagal dietą, laiko momentą ir laikrodį",
+    x = "Dieta", y = "Amžiaus pagreitis (metai)", fill = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Boxplot: amžiaus pagreitis pagal fizinį aktyvumą kiekvienam laikrodžiui
+ggplot(accel_long, aes(x = stimulus, y = acceleration, fill = timepoint)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreitis pagal fizinį aktyvumą, laiko momentą ir laikrodį",
+    x = "Fizinis aktyvumas", y = "Amžiaus pagreitis (metai)", fill = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Intervencijos efektas: amžiaus pagreičio pokytis (T18 - T0)
+
+# Kiekvienam tiriamajam skaičiuojame, kaip pasikeitė amžiaus pagreitis
+# tarp tyrimo pabaigos (T18) ir pradžios (T0).
+# Delta < 0 reiškia, kad intervencija sulėtino epigenetinį senėjimą.
+# Delta > 0 reiškia, kad epigenetinis senėjimas paspartėjo.
+
+accel_t18 <- clocks_df[clocks_df$timepoint == 18, c("donor", "diet", "stimulus", "sex",
+                                                    "accel_Horvath", "accel_Hannum", 
+                                                    "accel_Levine", "accel_skinHorvath")]
+accel_t0 <- clocks_df[clocks_df$timepoint == 0, c("donor", "accel_Horvath", "accel_Hannum",
+                                                  "accel_Levine", "accel_skinHorvath")]
+colnames(accel_t0)[2:5] <- paste0(colnames(accel_t0)[2:5], "_T0")
+
+# Sujungiame T0 ir T18 duomenis pagal tiriamąjį
+accel_change <- merge(accel_t18, accel_t0, by = "donor")
+
+# Apskaičiuojame delta (pokytį) kiekvienam laikrodžiui
+accel_change$delta_Horvath <- accel_change$accel_Horvath - accel_change$accel_Horvath_T0
+accel_change$delta_Hannum <- accel_change$accel_Hannum - accel_change$accel_Hannum_T0
+accel_change$delta_Levine <- accel_change$accel_Levine - accel_change$accel_Levine_T0
+accel_change$delta_skinHorvath <- accel_change$accel_skinHorvath - accel_change$accel_skinHorvath_T0
+
+# Pertvarkome į ilgą formatą
+delta_long <- pivot_longer(accel_change, cols = starts_with("delta_"),
+                           names_to = "clock", values_to = "delta",
+                           names_prefix = "delta_")
+
+# Boxplot: intervencijos efektas pagal dietą
+# Brūkšninė raudona linija ties 0 — jei mediana žemiau, intervencija sulėtino senėjimą
+ggplot(delta_long, aes(x = diet, y = delta, fill = diet)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreičio pokytis po intervencijos pagal dietą",
+    x = "Dieta", y = "Δ amžiaus pagreitis (metai)", fill = "Dieta"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Boxplot: intervencijos efektas pagal fizinį aktyvumą
+ggplot(delta_long, aes(x = stimulus, y = delta, fill = stimulus)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreičio pokytis po intervencijos pagal fizinį aktyvumą",
+    x = "Fizinis aktyvumas", y = "Δ amžiaus pagreitis (metai)", fill = "Aktyvumas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# T-testai sutraukti į lentelę
+t_results <- data.frame(
+  Laikrodis = rep(c("Horvath", "Hannum", "Levine", "skinHorvath"), each = 2),
+  Faktorius = rep(c("Dieta", "Fizinis aktyvumas"), 4),
+  p_verte = c(
+    t.test(delta_Horvath ~ diet, data = accel_change)$p.value,
+    t.test(delta_Horvath ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_Hannum ~ diet, data = accel_change)$p.value,
+    t.test(delta_Hannum ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_Levine ~ diet, data = accel_change)$p.value,
+    t.test(delta_Levine ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_skinHorvath ~ diet, data = accel_change)$p.value,
+    t.test(delta_skinHorvath ~ stimulus, data = accel_change)$p.value
+  )
+)
+t_results$Reikšmingas <- ifelse(t_results$p_verte < 0.05, "Taip", "Ne")
+
+kable(t_results, col.names = c("Laikrodis", "Faktorius", "p vertė", "Reikšmingas (p<0.05)"), digits = 4)
+
+# Laikrodžių tarpusavio koreliacijos heatmap
+
+# Skaičiuojame koreliaciją tarp visų laikrodžių ir chronologinio amžiaus.
+# Heatmap parodo, kurie laikrodžiai matuoja panašius dalykus.
+clock_cors <- cor(clocks_df[, c("Horvath", "Hannum", "Levine", "skinHorvath", "real_age")], 
+                  use = "complete")
+
+pheatmap(clock_cors,
+         display_numbers = TRUE,
+         number_format = "%.3f",
+         main = "Epigenetinių laikrodžių tarpusavio koreliacijos",
+         color = colorRampPalette(c("white", "steelblue"))(50))

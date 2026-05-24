@@ -21,8 +21,8 @@ library(knitr)
 
 ```{r linear_model_1, echo=FALSE, warning=FALSE, message=FALSE}
 showtext::showtext_auto()
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -33,6 +33,9 @@ library(gridExtra)
 library(qqman)
 library(pheatmap)
 library(limma)
+library(methylclock)
+library(tidyr)
+library(knitr)
 
 data <- readRDS("yaskolka.rds")
 
@@ -117,7 +120,7 @@ ggplot(volcano_df, aes(x = beta, y = logp, color = category)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r linear_model_2, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Su amžiumi susijusių CpG pasiskirstymas pagal genominį kontekstą ir metilinimo kryptį."}
+```{r linear_model_2, echo=FALSE, warning=FALSE, message=FALSE, cache=TRUE}
 # Genominio konteksto stulpelinė diagrama su kryptimis
 # Susidarome dataframe reikalingą grafikui atvaizduoti
 sig_context <- data.frame(
@@ -621,3 +624,164 @@ a3 <- ggplot(age_factors, aes(x=sex)) +
 grid.arrange(a1, a2, a3)
 ```
 Du trečdaliai "atjaunėjusių" imties tiriamųjų maitinosi žemo riebalų kiekio dieta, o trečdalis - žemo angliavandenių kiekio dieta. Du trečdaliai tiriamųjų buvo fiziškai aktyvūs, o trečdalis - ne, tad galbūt fizinis aktyvumas nėra esminis veiksnys norint pagerinti amžiaus rodiklius, svarbiau turėtų būti dieta, nes visi tiriamieji jos laikėsi, nepriklausomai nuo dietos tipo. Beveik visi šios imties tiriamieji pavaizduoti histogramoje yra vyrai, tačiau apskritai visame tyrime didžioji dalis tiriamųjų buvo vyrai, todėl sunku įvertinti ar yra lyties įtaka.
+
+
+**Amžiaus pagreitis pagal intervencijos grupes**
+
+**Metodas**: kiekvienam laikrodžiui (Horvath, Hannum, Levine, skinHorvath) apskaičiuotas amžiaus pagreitis - epigenetinio ir chronologinio amžiaus skirtumas. Teigiamas pagreitis reiškia, kad žmogus epigenetiškai „senesnis" nei chronologiškai, neigiamas — „jaunesnis". Pagreitis palygintas tarp dietos tipų ir fizinio aktyvumo grupių grafikuose, skirstant pagal mėginio paėmimo momentą (T0 ir T18).
+
+```{r pagreitis, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
+# Amžiaus pagreitis pagal visus laikrodžius ir intervencijos grupes
+
+# Skaičiuojame amžiaus pagreitį kiekvienam laikrodžiui.
+# Amžiaus pagreitis = epigenetinis amžius - chronologinis amžius.
+# Jei teigiamas - žmogus "senesnis" epigenetiškai nei chronologiškai.
+# Jei neigiamas - žmogus "jaunesnis" epigenetiškai.
+
+clocks_df$accel_Horvath <- clocks_df$Horvath - clocks_df$real_age
+clocks_df$accel_Hannum <- clocks_df$Hannum - clocks_df$real_age
+clocks_df$accel_Levine <- clocks_df$Levine - clocks_df$real_age
+clocks_df$accel_skinHorvath <- clocks_df$skinHorvath - clocks_df$real_age
+
+# Pertvarkome į ilgą formatą, kad galėtume naudoti facet_wrap
+accel_long <- pivot_longer(clocks_df, 
+                           cols = c(accel_Horvath, accel_Hannum, accel_Levine, accel_skinHorvath),
+                           names_to = "clock", values_to = "acceleration",
+                           names_prefix = "accel_")
+
+# Boxplot: amžiaus pagreitis pagal dietą kiekvienam laikrodžiui,
+# spalvinant pagal laiko momentą (T0 vs T18)
+ggplot(accel_long, aes(x = diet, y = acceleration, fill = timepoint)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreitis pagal dietą, laiko momentą ir laikrodį",
+    x = "Dieta", y = "Amžiaus pagreitis (metai)", fill = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Boxplot: amžiaus pagreitis pagal fizinį aktyvumą kiekvienam laikrodžiui
+ggplot(accel_long, aes(x = stimulus, y = acceleration, fill = timepoint)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreitis pagal fizinį aktyvumą, laiko momentą ir laikrodį",
+    x = "Fizinis aktyvumas", y = "Amžiaus pagreitis (metai)", fill = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Hannum ir Levine laikrodžiai rodo neigiamą amžiaus pagreitį (medianos žemiau 0) - tai reiškia, kad šie laikrodžiai sistemingai nuspėja jaunesnį amžių nei chronologinis. Horvath priešingai - rodo teigiamą pagreitį (medianos virš 0), kas reiškia, kad tiriamieji epigenetiškai „senesni" nei chronologiškai. skinHorvath medianos yra arčiausiai nulio, kas atitinka jo mažiausią MAE iš 6 dalies.
+
+Pagal dietą ryškaus skirtumo tarp žemo angliavandenių ir žemo riebalų dietų nematyti nei viename laikrodyje - boxplotų medianos ir dydžiai abiejose grupėse yra panašūs. Laiko momentų (T0 vs T18) palyginime taip pat nematyti nuoseklaus pokyčio: kai kuriuose laikrodžiuose T18 mediana šiek tiek aukštesnė (pvz. skinHorvath), tačiau skirtumai maži ir boxplotai stipriai persidengia.
+
+Pagal fizinį aktyvumą situacija analogiška — fiziškai aktyvių ir neaktyvių tiriamųjų amžiaus pagreitis panašus visuose laikrodžiuose. T0 ir T18 boxplotai taip pat stipriai persidengia. Tai rodo, kad nei dietos tipas, nei fizinis aktyvumas neturėjo ryškaus poveikio epigenetiniam senėjimui šiame tyrime.
+
+**Intervencijos efektas: amžiaus pagreičio pokytis**
+
+**Metodas**: kiekvienam tiriamajam apskaičiuotas amžiaus pagreičio pokytis (pagreitis T18 − pagreitis T0). Neigiamas pokytis reiškia, kad intervencija sulėtino epigenetinį senėjimą, teigiamas — kad senėjimas paspartėjo. Pokytis palygintas tarp dietos tipų ir fizinio aktyvumo grupių boxplotuose. Atlikti t-testai statistiniam reikšmingumui įvertinti
+
+```{r effect, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
+# Intervencijos efektas: amžiaus pagreičio pokytis (T18 - T0)
+
+# Kiekvienam tiriamajam skaičiuojame, kaip pasikeitė amžiaus pagreitis
+# tarp tyrimo pabaigos (T18) ir pradžios (T0).
+# Delta < 0 reiškia, kad intervencija sulėtino epigenetinį senėjimą.
+# Delta > 0 reiškia, kad epigenetinis senėjimas paspartėjo.
+
+accel_t18 <- clocks_df[clocks_df$timepoint == 18, c("donor", "diet", "stimulus", "sex",
+                                                    "accel_Horvath", "accel_Hannum", 
+                                                    "accel_Levine", "accel_skinHorvath")]
+accel_t0 <- clocks_df[clocks_df$timepoint == 0, c("donor", "accel_Horvath", "accel_Hannum",
+                                                  "accel_Levine", "accel_skinHorvath")]
+colnames(accel_t0)[2:5] <- paste0(colnames(accel_t0)[2:5], "_T0")
+
+# Sujungiame T0 ir T18 duomenis pagal tiriamąjį
+accel_change <- merge(accel_t18, accel_t0, by = "donor")
+
+# Apskaičiuojame delta (pokytį) kiekvienam laikrodžiui
+accel_change$delta_Horvath <- accel_change$accel_Horvath - accel_change$accel_Horvath_T0
+accel_change$delta_Hannum <- accel_change$accel_Hannum - accel_change$accel_Hannum_T0
+accel_change$delta_Levine <- accel_change$accel_Levine - accel_change$accel_Levine_T0
+accel_change$delta_skinHorvath <- accel_change$accel_skinHorvath - accel_change$accel_skinHorvath_T0
+
+# Pertvarkome į ilgą formatą
+delta_long <- pivot_longer(accel_change, cols = starts_with("delta_"),
+                           names_to = "clock", values_to = "delta",
+                           names_prefix = "delta_")
+
+# Boxplot: intervencijos efektas pagal dietą
+# Brūkšninė raudona linija ties 0 — jei mediana žemiau, intervencija sulėtino senėjimą
+ggplot(delta_long, aes(x = diet, y = delta, fill = diet)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreičio pokytis po intervencijos pagal dietą",
+    x = "Dieta", y = "Δ amžiaus pagreitis (metai)", fill = "Dieta"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Boxplot: intervencijos efektas pagal fizinį aktyvumą
+ggplot(delta_long, aes(x = stimulus, y = delta, fill = stimulus)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Amžiaus pagreičio pokytis po intervencijos pagal fizinį aktyvumą",
+    x = "Fizinis aktyvumas", y = "Δ amžiaus pagreitis (metai)", fill = "Aktyvumas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# T-testai sutraukti į lentelę
+t_results <- data.frame(
+  Laikrodis = rep(c("Horvath", "Hannum", "Levine", "skinHorvath"), each = 2),
+  Faktorius = rep(c("Dieta", "Fizinis aktyvumas"), 4),
+  p_verte = c(
+    t.test(delta_Horvath ~ diet, data = accel_change)$p.value,
+    t.test(delta_Horvath ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_Hannum ~ diet, data = accel_change)$p.value,
+    t.test(delta_Hannum ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_Levine ~ diet, data = accel_change)$p.value,
+    t.test(delta_Levine ~ stimulus, data = accel_change)$p.value,
+    t.test(delta_skinHorvath ~ diet, data = accel_change)$p.value,
+    t.test(delta_skinHorvath ~ stimulus, data = accel_change)$p.value
+  )
+)
+t_results$Reikšmingas <- ifelse(t_results$p_verte < 0.05, "Taip", "Ne")
+
+kable(t_results, col.names = c("Laikrodis", "Faktorius", "p vertė", "Reikšmingas (p<0.05)"), digits = 4)
+```
+
+Amžiaus pagreičio pokyčio boxplotuose matyti, kad abiejų dietų grupėse medianos yra arti nulio visuose laikrodžiuose - tai reiškia, kad per tyrimo laikotarpį epigenetinis amžius vidutiniškai kito panašiu greičiu kaip chronologinis. Hannum laikrodyje žemo angliavandenių dietos grupė rodo šiek tiek neigiamesnę medianą (lėtesnis senėjimas), o žemo riebalų - artimesnę nuliui. Horvath ir Levine laikrodžiuose abiejų dietų medianos panašios ir artimos nuliui. skinHorvath žemo angliavandenių grupėje mediana šiek tiek aukštesnė (teigiama), o žemo riebalų - artimesnė nuliui.
+
+Pagal fizinį aktyvumą skirtumai taip pat nedideli. Hannum laikrodyje fiziškai aktyvių tiriamųjų mediana šiek tiek žemesnė, kas galėtų rodyti lėtesnį senėjimą, tačiau boxplotai stipriai persidengia. Kituose laikrodžiuose grupės panašios.
+
+T-testų lentelė patvirtina grafikų rezultatus - nei dietos tipas, nei fizinis aktyvumas neparodė statistiškai reikšmingo poveikio amžiaus pagreičio pokyčiui nei viename laikrodyje (visi p > 0,05). Arčiausiai reikšmingumo slenksčio yra Hannum laikrodis: dietos efektas p = 0,0698, fizinio aktyvumo p = 0,0559. Tai gali rodyti, kad Hannum laikrodis yra jautriausias intervencijos efektams šiuose duomenyse.
+
+**Laikrodžių tarpusavio koreliacijos heatmap**
+
+**Metodas**: apskaičiuotos Pearsono koreliacijos tarp visų keturių epigenetinių laikrodžių ir chronologinio amžiaus, rezultatai pavaizduoti heatmap
+
+```{r heatmap, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
+# Laikrodžių tarpusavio koreliacijos heatmap
+
+# Skaičiuojame koreliaciją tarp visų laikrodžių ir chronologinio amžiaus.
+# Heatmap parodo, kurie laikrodžiai matuoja panašius dalykus.
+clock_cors <- cor(clocks_df[, c("Horvath", "Hannum", "Levine", "skinHorvath", "real_age")], 
+                  use = "complete")
+
+pheatmap(clock_cors,
+         display_numbers = TRUE,
+         number_format = "%.3f",
+         main = "Epigenetinių laikrodžių tarpusavio koreliacijos",
+         color = colorRampPalette(c("white", "steelblue"))(50))
+```
+
+Visi laikrodžiai stipriai koreliuoja tarpusavyje (r = 0,869–0,944) ir su chronologiniu amžiumi (r = 0,880–0,944). Stipriausiai su chronologiniu amžiumi koreliuoja skinHorvath (r = 0,944) ir Hannum (r = 0,915), o silpniausiai — Levine (r = 0,880). Dendrogramos klasterizacija taip pat tai atspindi: skinHorvath ir real_age sugrupuoti arčiausiai vienas kito, o Levine atsiskiria labiausiai. Tarp laikrodžių stipriausiai koreliuoja Hannum ir skinHorvath (r = 0,940), o silpniausiai — Levine ir Horvath (r = 0,869).
