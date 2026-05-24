@@ -134,7 +134,7 @@ ggplot(sig_context, aes(x = region, fill = direction)) +
 
 **Metodas**: pagal gauto tiesinio modelio p vertes atrinkti 10 patikimiausių citozinų. Atvaizduoti kiekvieno citozino modifikacijos įverčiai pagal tiriamųjų amžius (nuspalvinant modifikacijos įverčio tašką pagal mėginio laiko paėmimo momentą tyrime) ir nubrėžtos tiesinės regresijos linijos taip atvaizduojant kokios yra amžiaus sąsajos su metilinimo pokyčiais.
 
-```{r top10CpG_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+```{r top10CpG_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3, fig.cap="Reikšmingiausių citozinų modifikacijos įverčių pasiskirstymas pagal amžių pavaizduojant tiesinės regresijos liniją."}
 # 2. Patikimiausių skirtumų profiliai.
 
 # Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
@@ -282,7 +282,7 @@ Nustatyta, kad reikšmingiausi su amžiumi susiję citozinai yra (nuo labiausiai
 
 **Metodas**: iš tiesinės regresijos modelio gautos p-vertės pavaizduojamos histogramoje.
 
-```{r p_histogram, echo=FALSE, warning=FALSE, message=FALSE}
+```{r p_histogram, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Tiesinės regresijos modelio p verčių pasiskirstymas."}
 # 3. P-verčių histograma.
 
 # P verčių histograma.
@@ -355,7 +355,7 @@ ggplot(chr17, aes(x = pos_mb, y = logp)) +
 
 **Metodas**: atsisiųsti 'Horvath' epigenetinio laikrodžio duomenys: atitinkamų CpGs beta koeficientai. Tiriamuose duomenyse atrasti 334 CpG iš 353 nurodytų epigenetiniame laikrodyje. Kiekvieno CpG beta koeficientas padaugintas iš atitinkamo CpG metilinimo įverčio (beta reikšmės) sudedant šiuos įverčius kiekvienam mėginiui atskirai ir pridedant laisvąjį narį - gautas tiesinės regresijos įvertis kiekvienam mėginiui. Atskiram atvejui buvo panaudoti ir CpGs, kurių nebuvo duomenyse, bet buvo epigenetiniame laikrodyje: šių CpG beta koeficientai padauginti iš jų modifikacijos įverčių medianos ir sudėti, tuomet jie buvo pridėti prie jau gautų tiesinės regresijos įverčių. Gauti tiesinės regresijos įverčiai buvo transformuoti pasitelkiant formulę nurodytą Horvath straipsnio supplements faile: 20*x + 21. Palygintas chronologinis tiriamųjų amžius su epigenetiniu amžiumi: viename mėginio stulpelyje sujungiami taškai to paties tiriamojo mėginio realaus amžiaus su epigenetiniu amžiumi.
 
-```{r horvath_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+```{r horvath_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7, fig.cap="Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (papildomai įtraukus CpG, kurių nebuvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai)."}
 # 5. Horvath epigenetinis laikrodis
 DNAm <- read.csv("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/13059_2013_3156_MOESM3_ESM.csv", skip = 2)
 
@@ -435,9 +435,9 @@ ggplot(age_df_1, aes(x=cols,y=ages,color=groups,group=cols)) +
   theme(axis.text.x = element_blank())
 ```
 
-Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (papildomai įtraukus CpG, kurių nebuvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai). Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Chronologinio ir epigenetinio amžiaus amplitudės kai kuriais atvejais siekia ir 10 metų, tačiau vidutinis skirtumas yra 6.06 +/- 0.29 metai. Tikėtina, kad citozinus, naudojamus amžiaus skaičiavimui, veikia ne tik amžėjimo procesai, bet ir gyvenimo būdas prieš intervenciją bei pati intervencija, todėl ir atsiranda skirtumai tarp epigenetinio ir realaus amžiaus.
+Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Chronologinio ir epigenetinio amžiaus amplitudės kai kuriais atvejais siekia ir 10 metų, tačiau vidutinis skirtumas yra 6.06 +/- 0.29 metai. Tikėtina, kad citozinus, naudojamus amžiaus skaičiavimui, veikia ne tik amžėjimo procesai, bet ir gyvenimo būdas prieš intervenciją bei pati intervencija, todėl ir atsiranda skirtumai tarp epigenetinio ir realaus amžiaus.
 
-```{r horvath_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+```{r horvath_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7, fig.cap="Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (naudojant tik CpG, kurie buvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai)."}
 ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
   labs(title = "Tikras amžius vs. epigenetinis amžius (be papildomų CpG)", x = "Tiriamieji", y = "Amžius") +
   theme(plot.title = element_text(hjust=0.5, size=12)) +
@@ -461,7 +461,7 @@ ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
 # kadangi vidutinis amžiaus skirtumas tarp chronologinio ir epigenetinio mažesnis.
 ```
 
-Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (naudojant tik CpG, kurie buvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai). Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Lyginant su praeitu grafiku, realaus ir epigenetinio amžiaus skirtumai šiame grafike atrodo mažesni, o vidutinis skirtumas yra 4.64 +/- 0.29 metai, todėl naudoti tik epigenetinio laikrodžio CpG pozicijas, kurios yra duomenyse, atrodo kaip tikslesnis metodas.
+Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Lyginant su praeitu grafiku, realaus ir epigenetinio amžiaus skirtumai šiame grafike atrodo mažesni, o vidutinis skirtumas yra 4.64 +/- 0.29 metai, todėl naudoti tik epigenetinio laikrodžio CpG pozicijas, kurios yra duomenyse, atrodo kaip tikslesnis metodas.
 
 ## Apžvalginė analizė.
 
@@ -469,7 +469,7 @@ Horvath epigenetiniame laikrodyje nurodyti CpG turėtų būti susiję ne tik su 
 
 **Metodas**: remtasi epigenetiniu amžiumi, kuris apskaičiuotas naudojantis tik duomenyse randamomis CpG pozicijomis. Epigenetinis amžius pavaizduotas kiekvienam tiriamajam prieš ir po intervencijos laikotarpio (sujungti linija), siekiant išsiaiškinti kaip pasikeitė tiriamųjų epigenetinis amžius per 1,5 metų tyrimo laikotarpį.
 
-```{r analize, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+```{r analize, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7, fig.caption="Epigenetinio amžiaus skirtumai tiriamiesiems tyrimo pradžioje ir pabaigoje"}
 # Apžvalginė analizė
 
 # Žinome, kad chronologinis amžiaus skirtumas prieš ir po analizės yra 1,5 metų,
@@ -487,7 +487,7 @@ Iš grafiko matyti, kad maždaug pusei tiriamųjų epigenetinio amžiaus skirtum
 
 **Metodas**: atrinkti tiriamieji, kurių epigenetinis amžius sumažėjo tyrimo eigoje ir histogramose pavaizduotos šiems tiriamiesiems būdingos charakteristikos: dietos tipas, fizinio aktyvumo (ne)buvimas, lytis.
 
-```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
+```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7, fig.caption="Histogramos, kuriose vaizduojamas epigenetiškai atjaunėjusių tiriamųjų dieta, fizinio aktyvumo (ne)buvimas ir lytis"}
 # Iš grafiko matyti, kad kai kurių tiriamųjų epigenetinis amžius tyrimo eigoje sumažėjo.
 # Atsirenkame epigenetinius amžius, apskaičiuojame jų skirtumą tyrimo pradžioje ir pabaigoje,
 # šiuos skirtumus priskiriame tiriamiesiems.
@@ -528,5 +528,4 @@ a3 <- ggplot(age_factors, aes(x=sex)) +
 
 grid.arrange(a1, a2, a3)
 ```
-
 Du trečdaliai "atjaunėjusių" imties tiriamųjų maitinosi žemo riebalų kiekio dieta, o trečdalis - žemo angliavandenių kiekio dieta. Du trečdaliai tiriamųjų buvo fiziškai aktyvūs, o trečdalis - ne, tad galbūt fizinis aktyvumas nėra esminis veiksnys norint pagerinti amžiaus rodiklius, svarbiau turėtų būti dieta, nes visi tiriamieji jos laikėsi, nepriklausomai nuo dietos tipo. Beveik visi šios imties tiriamieji pavaizduoti histogramoje yra vyrai, tačiau apskritai visame tyrime didžioji dalis tiriamųjų buvo vyrai, todėl sunku įvertinti ar yra lyties įtaka.
