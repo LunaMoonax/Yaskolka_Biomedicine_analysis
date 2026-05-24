@@ -127,7 +127,7 @@ top10_CPGs
 
 # Top 10 CpG scatter plot'ai — stipriausi amžiaus ir metilinimo ryšiai pagal pvalue.
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[1],])),
+p1 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[1],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -139,7 +139,7 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[2],])),
+p2 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[2],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -151,7 +151,9 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[3],])),
+grid.arrange(p1, p2)
+
+p3 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[3],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -163,7 +165,7 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[4],])),
+p4 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[4],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -175,7 +177,9 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[5],])),
+grid.arrange(p3, p4)
+
+p5 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[5],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -187,7 +191,7 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[6],])),
+p6 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[6],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -199,7 +203,9 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[7],])),
+grid.arrange(p5, p6)
+
+p7 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[7],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -211,7 +217,7 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[8],])),
+p8 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[8],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -223,7 +229,9 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[9],])),
+grid.arrange(p7, p8)
+
+p9 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[9],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -235,7 +243,7 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[10],])),
+p10 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[10],])),
        aes(x = age, y = methylation)) +
   geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
   scale_color_manual(values = c("0" = "blue", "18" = "red")) +
@@ -246,6 +254,8 @@ ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_C
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(p9, p10)
 
 # 3. P-verčių histograma.
 
@@ -428,23 +438,25 @@ length(donors_neg_diff)
 # (diet ir stimulus tam pačiam tiriamajam  T0 ir T18 nurodomi vienodi)
 age_factors <- colanns(age_data)[colanns(age_data)$timepoint == 0 & colanns(age_data)$donor %in% donors_neg_diff,]
 
-ggplot(age_factors, aes(x=diet)) +
+g1 <- ggplot(age_factors, aes(x=diet)) +
   labs(title = "Epigenetiškai atjaunėjusių tiriamųjų dieta", x = "Dietos tipas", y = "Tiriamųjų kiekis") +
   theme(plot.title = element_text(hjust=0.5, size=12)) +
   geom_bar(fill = "slateblue") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(age_factors, aes(x=stimulus)) +
+g2 <- ggplot(age_factors, aes(x=stimulus)) +
   labs(title = "Epigenetiškai atjaunėjusių tiriamųjų fizinis aktyvumas", x = "Fizinis aktyvumo (ne)buvimas", y = "Tiriamųjų kiekis") +
   theme(plot.title = element_text(hjust=0.5, size=12)) +
   geom_bar(fill = "slateblue") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(age_factors, aes(x=sex)) +
+g3 <- ggplot(age_factors, aes(x=sex)) +
   labs(title = "Epigenetiškai atjaunėjusių tiriamųjų lytis", x = "Lytis", y = "Tiriamųjų kiekis") +
   theme(plot.title = element_text(hjust=0.5, size=12)) +
   geom_bar(fill = "slateblue") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(g1, g2, g3)

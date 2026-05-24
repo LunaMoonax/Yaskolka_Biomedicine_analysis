@@ -148,7 +148,7 @@ Volcano grafike hipometilintų CpG yra gausiau, tačiau patys reikšmingiausi ci
 
 **Metodas**: pagal gauto tiesinio modelio p vertes atrinkti 10 patikimiausių citozinų. Atvaizduoti kiekvieno citozino modifikacijos įverčiai pagal tiriamųjų amžius (nuspalvinant modifikacijos įverčio tašką pagal mėginio laiko paėmimo momentą tyrime) ir nubrėžtos tiesinės regresijos linijos taip atvaizduojant kokios yra amžiaus sąsajos su metilinimo pokyčiais.
 
-```{r top10CpG_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=5}
+```{r top10CpG_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
 # 2. Patikimiausių skirtumų profiliai.
 
 # Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
@@ -283,11 +283,10 @@ p10 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, size = 10))
 
-grid.arrange(p1, p2, p3, p4, nrow = 2)
-grid.arrange(p5, p6, p7, p8, nrow = 2)
-```
-
-```{r top10CpG_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+grid.arrange(p1, p2)
+grid.arrange(p3, p4)
+grid.arrange(p5, p6)
+grid.arrange(p7, p8)
 grid.arrange(p9, p10)
 ```
 
@@ -502,7 +501,7 @@ Iš grafiko matyti, kad maždaug pusei tiriamųjų epigenetinio amžiaus skirtum
 
 **Metodas**: atrinkti tiriamieji, kurių epigenetinis amžius sumažėjo tyrimo eigoje ir histogramose pavaizduotos šiems tiriamiesiems būdingos charakteristikos: dietos tipas, fizinio aktyvumo (ne)buvimas, lytis.
 
-```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=7}
 # Iš grafiko matyti, kad kai kurių tiriamųjų epigenetinis amžius tyrimo eigoje sumažėjo.
 # Atsirenkame epigenetinius amžius, apskaičiuojame jų skirtumą tyrimo pradžioje ir pabaigoje,
 # šiuos skirtumus priskiriame tiriamiesiems.
@@ -513,7 +512,7 @@ unique_donor$age_diff <- epi_age_diff
 
 # Atsirenkame tuos tiriamuosius, kurių epigenetinis amžius sumažėjo tyrimo eigoje.
 donors_neg_diff <- unique_donor[unique_donor$age_diff < 0,]$donor
-length(donors_neg_diff)
+# length(donors_neg_diff)
 
 # Atvaizduosime epigenetiškai atjaunėjusių tiriamųjų charakteristikas.
 # Kad dėl poruotų mėginių nesidubliuotų stulpelių rezultatai diet, stimulus, pasiliekame tik T0 mėginius
@@ -541,7 +540,7 @@ a3 <- ggplot(age_factors, aes(x=sex)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, size = 10))
 
-grid.arrange(a1, a2, a3, nrow = 1)
+grid.arrange(a1, a2, a3)
 ```
 
 Du trečdaliai "atjaunėjusių" imties tiriamųjų maitinosi žemo riebalų kiekio dieta, o trečdalis - žemo angliavandenių kiekio dieta. Du trečdaliai tiriamųjų buvo fiziškai aktyvūs, o trečdalis - ne, tad galbūt fizinis aktyvumas nėra esminis veiksnys norint pagerinti amžiaus rodiklius, svarbiau turėtų būti dieta, nes visi tiriamieji jos laikėsi, nepriklausomai nuo dietos tipo. Beveik visi šios imties tiriamieji pavaizduoti histogramoje yra vyrai, tačiau apskritai visame tyrime didžioji dalis tiriamųjų buvo vyrai, todėl sunku įvertinti ar yra lyties įtaka.
