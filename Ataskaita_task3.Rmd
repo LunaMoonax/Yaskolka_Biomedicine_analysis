@@ -1,0 +1,533 @@
+---
+title: "Trečia užduotis"
+author: "Skaistė Bartkutė, Viktorija Ramonaitė"
+date: "2026-05-24"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+    fig_crop: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 6, fig.height = 4, fig.align = "center")
+library(paletteer)
+library(showtext)
+library(knitr)
+```
+
+```{r linear_model, echo=FALSE, warning=FALSE, message=FALSE}
+showtext::showtext_auto()
+#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+
+library(annmatrix)
+library(ggplot2)
+library(matrixTests)
+library(effsize)
+library(effectsize)
+library(gridExtra)
+library(qqman)
+library(pheatmap)
+library(limma)
+
+data <- readRDS("yaskolka.rds")
+
+# Pirmiausia, pašalinami mėginiai nustatyti išskirtimis.
+outlier_names = c("295_CENTRAL_T0", "295_CENTRAL_T18", "144_CENTRAL_T0", "144_CENTRAL_T18", 
+                  "18_CENTRAL_T0", "18_CENTRAL_T18", "266_CENTRAL_T0", "266_CENTRAL_T18")
+
+data <- data[,!colnames(data) %in% outlier_names]
+
+# 1. Raskite senėjimo tendencijas
+
+# Pasitikriname galimus kokybinius kintamuosius, kuriuos būtų galima įtraukti į modelį
+# Pagrinde ieškome tokių, kuriuose būtų variabilumas
+# head(colanns(data))
+# table(data$celltype)
+# table(data$diagnosis)
+# table(data$diet)
+# table(data$sex)
+# table(data$stimulus)
+# table(data$timepoint)
+# table(data$timepoint, data$stimulus)
+
+# Naudojame limma paketą, kuris yra optimizuotas tiesinės regresijos modeliams taikyti
+# didelėms genomikos matricoms. Viduje naudoja tą patį tiesinį regresijos modelį kaip lm(),
+# tačiau yra žymiai greitesnis, nes apdoroja visas CpG pozicijas vienu metu,
+# o ne po vieną cikle.
+
+# Sukuriame design matricą su visais kintamaisiais:
+# age - mus dominantis kintamasis (senėjimo efektas)
+# sex, diet, stimulus, timepoint - kontroliniai kintamieji,
+# kuriuos kontroliuojame.
+design <- model.matrix(~ age + sex + diet + stimulus + timepoint, data = colanns(data))
+
+# Pritaikome tiesinį regresijos modelį visoms CpG pozicijoms vienu metu.
+fit <- lmFit(as.matrix(data), design)
+
+# Ištraukiame amžiaus beta koeficientus
+betas_age <- fit$coefficients[,"age"]
+# P-vertes skaičiuojame iš t-statistikos ir laisvės laipsnių
+t_stat <- fit$coefficients[,"age"] / fit$stdev.unscaled[,"age"] / fit$sigma
+pvalues <- 2 * pt(-abs(t_stat), df = fit$df.residual)
+
+# P-verčių korekcija FDR metodu
+pvalues_adj <- p.adjust(pvalues, method = "fdr")
+
+# Kiek citozinų rodo su amžiumi susijusias tendencijas?
+significant <- pvalues_adj < 0.05
+# sum(significant)
+# sum(significant) / nrow(data) * 100
+
+# Kokios modifikavimo kryptys? (hipermetilinimas vs hipometilinimas)
+# sum(betas_age[significant] > 0)   # hipermetilinta
+# sum(betas_age[significant] < 0)   # hipometilinta
+
+# Kokiuose genominiuose kontekstuose šie citozinai randami?
+# table(rowanns(data[significant,])$relation_to_island)
+# table(unlist(strsplit(rowanns(data[significant,])$ucsc_refgene_group, ";")))
+
+# Volcano grafikas
+# Susidarome dataframe reikalingą grafikui atvaizduoti
+volcano_df <- data.frame(
+  beta = betas_age,
+  logp = -log10(pvalues_adj)
+)
+# Suteikiame pavadinimus kategorijomis, kad grafike matytusi
+volcano_df$category <- "Nereikšmingas"
+volcano_df$category[pvalues_adj < 0.05 & betas_age > 0] <- "Hipermetilinta"
+volcano_df$category[pvalues_adj < 0.05 & betas_age < 0] <- "Hipometilinta"
+
+# Piešiame plotą
+ggplot(volcano_df, aes(x = beta, y = logp, color = category)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_color_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue", "Nereikšmingas" = "grey70")) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+  labs(
+    title = "Senėjimo tendencijos (Volcano grafikas)",
+    x = "Beta koeficientas (amžiaus efektas per metus)",
+    y = expression(-log[10](p[adj])),
+    color = "Kategorija"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Genominio konteksto stulpelinė diagrama su kryptimis
+# Susidarome dataframe reikalingą grafikui atvaizduoti
+sig_context <- data.frame(
+  region = rowanns(data[significant,])$relation_to_island,
+  direction = ifelse(betas_age[significant] > 0, "Hipermetilinta", "Hipometilinta")
+)
+# Piešiame plotą
+ggplot(sig_context, aes(x = region, fill = direction)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("Hipermetilinta" = "red", "Hipometilinta" = "blue")) +
+  labs(
+    title = "Su amžiumi susijusių CpG pasiskirstymas pagal genominį kontekstą",
+    x = "Regionas", y = "CpG kiekis", fill = "Kryptis"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## 2. Patikimiausių skirtumų profiliai.
+
+**Metodas**: pagal gauto tiesinio modelio p vertes atrinkti 10 patikimiausių citozinų. Atvaizduoti kiekvieno citozino modifikacijos įverčiai pagal tiriamųjų amžius (nuspalvinant modifikacijos įverčio tašką pagal mėginio laiko paėmimo momentą tyrime) ir nubrėžtos tiesinės regresijos linijos taip atvaizduojant kokios yra amžiaus sąsajos su metilinimo pokyčiais.
+
+```{r top10CpG_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=5}
+# 2. Patikimiausių skirtumų profiliai.
+
+# Duomenys surikiuojami pagal p-vertę didėjimo tvarka (pradedant nuo mažiausių p verčių).
+sorted_pvalues_adj <- sort(pvalues_adj)
+
+# Atrenkame 10 mažiausią p-vertę turinčių citozinų.
+top10_CPGs <- names(sorted_pvalues_adj[1:10])
+# top10_CPGs
+
+# Tai citozinai: cg16867657, cg17268658, cg21572722, cg22454769, cg06639320,
+# cg24724428, cg08097417, cg07553761, cg26947034, cg17403084.
+
+# Top 10 CpG scatter plot'ai — stipriausi amžiaus ir metilinimo ryšiai pagal pvalue.
+
+p1 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[1],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[1]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p2 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[2],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[2]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p3 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[3],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[3]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p4 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[4],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[4]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p5 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[5],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[5]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p6 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[6],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[6]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p7 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[7],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[7]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p8 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[8],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[8]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p9 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[9],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[9]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+p10 <- ggplot(data.frame(age = colanns(data)$age, methylation = as.numeric(data[top10_CPGs[10],])),
+       aes(x = age, y = methylation)) +
+  geom_point(alpha = 0.5, aes(color=factor(colanns(data)$timepoint))) +
+  scale_color_manual(values = c("0" = "blue", "18" = "red")) +
+  geom_smooth(method = "lm", color = "green") +
+  labs(
+    title = paste("Metilinimo priklausomybė nuo amžiaus:", top10_CPGs[10]),
+    x = "Amžius", y = "Metilinimas", color = "Laiko momentas"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+grid.arrange(p5, p6, p7, p8, nrow = 2)
+```
+
+```{r top10CpG_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+grid.arrange(p9, p10)
+```
+
+Nustatyta, kad reikšmingiausi su amžiumi susiję citozinai yra (nuo labiausiai reikšmingo iki mažiausiai): cg16867657, cg17268658, cg21572722, cg22454769, cg06639320, cg24724428, cg08097417, cg07553761, cg26947034, cg17403084. Citozinai, kurių metilinimas didėja bėgant laikui: cg16867657, cg17268658, cg21572722, cg22454769, cg06639320, cg24724428, cg08097417, cg07553761. Citozinai, kurių metilinimas sumažėja bėgant laikui: cg26947034, cg17403084. Kadangi taškai pagal mėginio paėmimo momentą yra pasiskirstę homogeniškai, galima daryti išvadą, kad šiems citozinams ir jų metilinimui didžiausią įtaką ir daro amžius nepriklausomai nuo intervencijos. Stačiausiu kampu aukštyn pasižymi: cg06639320. Beveik visuose citozinuose reikšmių išsibarstymas nėra stipriai susitelkęs aplink tiesinės regresijos liniją, tačiau matoma bendra didėjimo/mažėjimo tendencija.
+
+## 3. P-verčių histograma.
+
+**Metodas**: iš tiesinės regresijos modelio gautos p-vertės pavaizduojamos histogramoje.
+
+```{r p_histogram, echo=FALSE, warning=FALSE, message=FALSE}
+# 3. P-verčių histograma.
+
+# P verčių histograma.
+ggplot(data.frame(pvalue = pvalues_adj), aes(x=pvalue)) +
+  labs(title = "P verčių pasiskirstymas", x = "P vertė", y = "Kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_histogram(binwidth=0.01, fill = "darkolivegreen")
+
+# Statistiškai patikimų citozinų dalis apskaičiuota anksčiau.
+```
+
+Iš histogramos galima pastebėti, kad yra nemaža dalis citozinų susitelkusi nuo 0.0 iki 0.05, o tai rodo, kad šie citozinai susiję su amžiumi. Likusios p-vertės pasiskirsčiusios tolygiai didėdamos grafike 0.05 iki 1.0, kas rodo, kad didžioji dalis citozinų nėra reikšmingi amžiaus prediktoriai. Iš viso 55148 citozinai arba 6.37% visų citozinų yra svarbūs amžiaus tiesinės regresijos modelyje.
+
+## 4. Manhattan grafikas.
+
+**Metodas**: Manhattan grafike kiekvienai CpG pozicijai pavaizduota -log10(p) vertė pagal jos genominę poziciją chromosomose. Naudotos FDR koreguotos p vertės iš tiesinės regresijos modelio. Horizontali raudona linija žymi reikšmingumo slenkstį (p = 0.05). Papildomai nubraižytas atskiras Manhattan grafikas 17 chromosomai, kuri pasižymėjo didžiausiu reikšmingų CpG pozicijų tankiu.
+
+```{r manhattan, echo=FALSE, warning=FALSE, message=FALSE}
+# 5. Manhattan grafikas
+
+# Sudarom duomenų rinkinį manhattann plotui su reikalingais duomenimis
+manhattan_df <- data.frame(
+  SNP = rownames(data),
+  CHR = as.numeric(gsub("chr", "", data@chr)),
+  BP = data@pos,
+  P = pvalues_adj
+)
+
+# Pašaliname tuščias reikšmes, kad plotas būtų atvaizduotas tiksliai
+manhattan_df <- manhattan_df[!is.na(manhattan_df$CHR) & !is.na(manhattan_df$P) & !is.na(manhattan_df$BP), ]
+
+# Braižome manhattan plotą
+manhattan(manhattan_df, main = "Manhattan grafikas (visos chromosomos)",
+          suggestiveline = FALSE, genomewideline = -log10(0.05),
+          col = c("steelblue", "darkorange"))
+# Dauguma taškų yra patikimi (virš raudonos linijos, kuri žymi p=0.05). Kuo aukštesnis taškas
+# tuo patikimesnis skirtumas (p rekšmė mažiausia). 
+# Grafike dauguma chromosomų atrodo panašios, ir itin didelių skirtumų sunku rasti.
+# Pasirenkame išsiskiriančia 17 chromosoma - palyginus su kitomis chromosomomis
+# ji turi daugiausiai taškų, kurie yra aukštai (ne tik pavienį tašką).
+
+```
+
+Manhattan grafike matyti, kad reikšmingų CpG pozicijų (virš raudonos linijos, žyminčios p = 0.05) yra daug visose chromosomose. Reikšmingų taškų pasiskirstymas tarp chromosomų yra gana tolygus, be ryškių lokusų. Stipriausias signalas matomas 6 chromosomoje, kur vienas taškas pasiekia -log10(p) > 50. 17 chromosoma išsiskiria didesniu reikšmingų taškų tankiu viršutinėje grafiko dalyje (-log10(p) > 10), todėl ji pasirinkta detalesnei analizei atskirame grafike. Bendrai grafike nematyti vienos dominuojančios genominės srities - reikšmingų pagal tiesinės regresijos modelį citozinų yra per visą genomą.
+
+```{r manhattan_chrom, echo=FALSE, warning=FALSE, message=FALSE}
+# Kadangi norime atvaizduoti tik vieną chromosomą ir suprantamai, čia pasinaudosime ggplot
+# Paruošiame duomenis grafikui, logoritmuojame ir konvertuojame pozicijas į megabazes (Mb)
+chr17 <- manhattan_df[manhattan_df$CHR == 17, ]
+chr17$logp <- -log10(chr17$P)
+chr17$pos_mb <- chr17$BP / 1e6
+
+# Braižome manhattan plotą 17 chromosomai
+ggplot(chr17, aes(x = pos_mb, y = logp)) +
+  geom_point(size = 1, alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+  scale_x_continuous(breaks = seq(0, 80, by = 5)) +
+  labs(
+    title = "Manhattan grafikas (17 chromosoma)",
+    x = "Genominė pozicija (Mb)",
+    y = expression(-log[10](p))
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+17 chromosomoje reikšmingos CpG pozicijos (virš raudonos punktyrinės linijos) pasiskirstę netolygiai. Matomi trys aiškūs CpG pozicijų tankio regionai: 0–22 Mb, 25–50 Mb ir 53-80 Mb tarp kurių (ties ~22–25 Mb) pastebimas tarpas, kur nėra CpG pozicijų — tai greičiausiai atitinka 17 chromosomos centromero sritį, kurioje CpG beveik nėra. Stipriausias signalas pasiekia -log10(p) ≈ 20. Vidurinėje chromosomos dalyje (25–50 Mb) reikšmingų taškų tankis atrodo didžiausias negu aplinkinėse srityse, taip pat šioje srityje daugiausiai taškų su didžiausiosmis -log10(p) reikšmėmis. Reikšmingų ir su amžiumi (tiesinės regresijos modeliu) susijusių citozinu yra visoje chromosomoje.
+
+## 4. 'Horvath' epigenetinis laikrodis.
+
+**Metodas**: atsisiųsti 'Horvath' epigenetinio laikrodžio duomenys: atitinkamų CpGs beta koeficientai. Tiriamuose duomenyse atrasti 334 CpG iš 353 nurodytų epigenetiniame laikrodyje. Kiekvieno CpG beta koeficientas padaugintas iš atitinkamo CpG metilinimo įverčio (beta reikšmės) sudedant šiuos įverčius kiekvienam mėginiui atskirai ir pridedant laisvąjį narį - gautas tiesinės regresijos įvertis kiekvienam mėginiui. Atskiram atvejui buvo panaudoti ir CpGs, kurių nebuvo duomenyse, bet buvo epigenetiniame laikrodyje: šių CpG beta koeficientai padauginti iš jų modifikacijos įverčių medianos ir sudėti, tuomet jie buvo pridėti prie jau gautų tiesinės regresijos įverčių. Gauti tiesinės regresijos įverčiai buvo transformuoti pasitelkiant formulę nurodytą Horvath straipsnio supplements faile: 20*x + 21. Palygintas chronologinis tiriamųjų amžius su epigenetiniu amžiumi: viename mėginio stulpelyje sujungiami taškai to paties tiriamojo mėginio realaus amžiaus su epigenetiniu amžiumi.
+
+```{r horvath_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+# 5. Horvath epigenetinis laikrodis
+DNAm <- read.csv("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/13059_2013_3156_MOESM3_ESM.csv", skip = 2)
+
+# length(DNAm$CpGmarker)
+# Kartu su Intercept yra 353 CpG markeriai epigenetiniam amžiui nustatyti.
+
+age_data <- data[rownames(data) %in% DNAm$CpGmarker,]
+# dim(age_data)
+# Duomenyse atrasti 334 CpG markeriai iš 353 markerių.
+
+# Išsisaugome intercept reikšmę.
+intercept <- DNAm$CoefficientTraining[1]
+
+# Pasiliekame tik tuos epigenetinio laikrodžio CpGs, kurie buvo rasti duomenyse.
+# Perrikiuojame age data pagal CpGmarker, kad modifikacijos įverčiai būtų padauginti iš teisingų koeficientų.
+DNAm_CPGs <- DNAm[DNAm$CpGmarker %in% rownames(age_data),]
+age_data <- age_data[DNAm_CPGs$CpGmarker,]
+# rownames(age_data) == DNAm_CPGs$CpGmarker
+# length(DNAm_CPGs$CpGmarker)
+
+# Padauginame koeficientus atitinkamo CpG iš jo modifikacijos įverčio ir sudedame į galutinę mėginio sumą.
+epigenetic_age <- colSums(age_data * DNAm_CPGs$CoefficientTraining) + intercept
+
+# Norime pridėti efektus ir tų CpG, kurių nebuvo duomenyse.
+# Todėl padauginsime nepanaudotų CpG medianas iš jų koeficiento.
+DNAm_CPGs_not_found <- DNAm[!DNAm$CpGmarker %in% rownames(age_data),]
+
+# Pašaliname intercept, kad nesikartotų.
+DNAm_CPGs_not_found <- DNAm_CPGs_not_found[-1, ]
+
+# Dauginame CpG medianas iš atitinkamo jų koeficiento ir gauname galutinę sumą jų efekto.
+coeff <- sum(DNAm_CPGs_not_found$CoefficientTraining * DNAm_CPGs_not_found$medianByCpG)
+epigenetic_age_w_coeff <- epigenetic_age + coeff
+
+# Horvath apibrėžta gautų įverčių transformavimo funkcija (supplementary failuose).
+anti.trafo <- function(x,adult.age=20) { 
+   if(x<0) {
+     (1+adult.age)*exp(x)-1
+   } else {
+     (1+adult.age)*x+adult.age 
+   }
+}
+
+# Kiekvienam tiriamajam pritaikome amžiaus transformaciją.
+epigenetic_age_w_coeff <- sapply(epigenetic_age_w_coeff, anti.trafo)
+epigenetic_age <- sapply(epigenetic_age, anti.trafo)
+
+# Sudarome data frames grafikams: realus amžius ir epigentinis amžius su papildomais CpG
+age_df_1 <- data.frame(
+  ages = c(age_data$age, epigenetic_age_w_coeff),
+  groups = c(rep("real", length(age_data$age)),
+            rep("epi", length(epigenetic_age_w_coeff))),
+  cols = colnames(age_data),
+  timepoint = age_data$timepoint,
+  donor = age_data$donor
+)
+
+# Realus amžius ir epigentinis amžius be papildomų CpG
+age_df_2 <- data.frame(
+  ages = c(age_data$age, epigenetic_age),
+  groups = c(rep("real", length(age_data$age)),
+             rep("epi", length(epigenetic_age))),
+  cols = colnames(age_data),
+  timepoint = age_data$timepoint,
+  donor = age_data$donor
+)
+
+# Dėl tvarkingumo pašalinami mėginių vardai.
+ggplot(age_df_1, aes(x=cols,y=ages,color=groups,group=cols)) +
+  labs(title = "Tikras amžius vs. epigenetinis amžius (su papildomais CpG)", x = "Tiriamieji", y = "Amžius") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  scale_color_manual(values = c("real" = "red", "epi" = "blue"),
+                     labels = c("real" = "realus amžius", "epi" = "epigenetinis amžius"),
+                     name = "Amžiaus kategorija") +
+  theme(axis.text.x = element_blank())
+```
+
+Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (papildomai įtraukus CpG, kurių nebuvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai). Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Chronologinio ir epigenetinio amžiaus amplitudės kai kuriais atvejais siekia ir 10 metų, tačiau vidutinis skirtumas yra 6.06 +/- 0.29 metai. Tikėtina, kad citozinus, naudojamus amžiaus skaičiavimui, veikia ne tik amžėjimo procesai, bet ir gyvenimo būdas prieš intervenciją bei pati intervencija, todėl ir atsiranda skirtumai tarp epigenetinio ir realaus amžiaus.
+
+```{r horvath_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
+  labs(title = "Tikras amžius vs. epigenetinis amžius (be papildomų CpG)", x = "Tiriamieji", y = "Amžius") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  scale_color_manual(values = c("real" = "red", "epi" = "blue"),
+                     labels = c("real" = "realus amžius", "epi" = "epigenetinis amžius"),
+                     name = "Amžiaus kategorija") +
+  theme(axis.text.x = element_blank())
+
+# Vidutiniai skirtumai tarp epigenetinio amžiaus ir realaus amžiaus.
+# mean(epigenetic_age_w_coeff - age_data$age)
+# mean(epigenetic_age - age_data$age)
+
+# Standartinės paklaidos tarp epigenetinio amžiaus ir realaus amžiaus skirtumų.
+# sd(epigenetic_age_w_coeff - age_data$age) /sqrt(length(epigenetic_age_w_coeff))
+# sd(epigenetic_age - age_data$age) /sqrt(length(epigenetic_age))
+
+# Gauname vienodas standartines paklaidas tiek naudojant papildomus CpG, tiek nenaudojant.
+# Tačiau skaičiavimas nenaudojant papildomų CpG atrodo tikslesnis, 
+# kadangi vidutinis amžiaus skirtumas tarp chronologinio ir epigenetinio mažesnis.
+```
+
+Šiame grafike pavaizduoti epigenetinio amžiaus įverčiai (naudojant tik CpG, kurie buvo duomenyse) lyginant su realiu tiriamųjų amžiumi (pavaizduoti visi mėginiai). Beveik visais atvejais epigenetinis amžius yra aukštesnis už chronologinį išskyrus kelis pavienius atvejus. Lyginant su praeitu grafiku, realaus ir epigenetinio amžiaus skirtumai šiame grafike atrodo mažesni, o vidutinis skirtumas yra 4.64 +/- 0.29 metai, todėl naudoti tik epigenetinio laikrodžio CpG pozicijas, kurios yra duomenyse, atrodo kaip tikslesnis metodas.
+
+## Apžvalginė analizė.
+
+Horvath epigenetiniame laikrodyje nurodyti CpG turėtų būti susiję ne tik su amžėjimo procesais. Būtų įdomu patyrinėti, kaip epigenetinis amžius pasikeitė tiriamiesiems prieš ir po tyrimo intervencijos.
+
+**Metodas**: remtasi epigenetiniu amžiumi, kuris apskaičiuotas naudojantis tik duomenyse randamomis CpG pozicijomis. Epigenetinis amžius pavaizduotas kiekvienam tiriamajam prieš ir po intervencijos laikotarpio (sujungti linija), siekiant išsiaiškinti kaip pasikeitė tiriamųjų epigenetinis amžius per 1,5 metų tyrimo laikotarpį.
+
+```{r analize, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+# Apžvalginė analizė
+
+# Žinome, kad chronologinis amžiaus skirtumas prieš ir po analizės yra 1,5 metų,
+# tačiau norime patyrinėti kaip pasikeitė epigenetinis amžius prieš ir po tyrimo.
+
+ggplot(age_df_2[age_df_2$groups == "epi",], aes(x=donor,y=ages, color=factor(timepoint), group=donor)) +
+  labs(title = "Epigenetinio amžiaus amplitudė", x = "Tiriamieji", y = "Amžius", color = "Mėginio paėmimo momentas") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  theme(axis.text.x = element_blank())
+```
+
+Iš grafiko matyti, kad maždaug pusei tiriamųjų epigenetinio amžiaus skirtumas yra mažesnis negu tyrimo laikotarpis: 1,5 metų, todėl tyrimo intervencija kai kuriems tiriamiesiems darė teigiamą įtaką. Daliai tiriamųjų net pavyko "epigenetiškai atjaunėti", nes epigenetinis amžius sumažėjo po tyrimo intervencijos, kas rodo, kad citozinų metilinimui įtaką daro ir kiti veiksniai be amžiaus.
+
+**Metodas**: atrinkti tiriamieji, kurių epigenetinis amžius sumažėjo tyrimo eigoje ir histogramose pavaizduotos šiems tiriamiesiems būdingos charakteristikos: dietos tipas, fizinio aktyvumo (ne)buvimas, lytis.
+
+```{r amzius, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+# Iš grafiko matyti, kad kai kurių tiriamųjų epigenetinis amžius tyrimo eigoje sumažėjo.
+# Atsirenkame epigenetinius amžius, apskaičiuojame jų skirtumą tyrimo pradžioje ir pabaigoje,
+# šiuos skirtumus priskiriame tiriamiesiems.
+epi_age_df <- age_df_2[age_df_2$groups == "epi",]
+epi_age_diff <- epi_age_df[epi_age_df$timepoint == 18,]$ages - epi_age_df[epi_age_df$timepoint == 0,]$ages
+unique_donor <- epi_age_df[!duplicated(epi_age_df$donor),]
+unique_donor$age_diff <- epi_age_diff
+
+# Atsirenkame tuos tiriamuosius, kurių epigenetinis amžius sumažėjo tyrimo eigoje.
+donors_neg_diff <- unique_donor[unique_donor$age_diff < 0,]$donor
+length(donors_neg_diff)
+
+# Atvaizduosime epigenetiškai atjaunėjusių tiriamųjų charakteristikas.
+# Kad dėl poruotų mėginių nesidubliuotų stulpelių rezultatai diet, stimulus, pasiliekame tik T0 mėginius
+# (diet ir stimulus tam pačiam tiriamajam  T0 ir T18 nurodomi vienodi)
+age_factors <- colanns(age_data)[colanns(age_data)$timepoint == 0 & colanns(age_data)$donor %in% donors_neg_diff,]
+
+a1 <- ggplot(age_factors, aes(x=diet)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų dieta", x = "Dietos tipas", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+a2 <- ggplot(age_factors, aes(x=stimulus)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų fizinis aktyvumas", x = "Fizinis aktyvumo (ne)buvimas", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+a3 <- ggplot(age_factors, aes(x=sex)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų lytis", x = "Lytis", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10))
+
+grid.arrange(a1, a2, a3, nrow = 1)
+```
+
+Du trečdaliai "atjaunėjusių" imties tiriamųjų maitinosi žemo riebalų kiekio dieta, o trečdalis - žemo angliavandenių kiekio dieta. Du trečdaliai tiriamųjų buvo fiziškai aktyvūs, o trečdalis - ne, tad galbūt fizinis aktyvumas nėra esminis veiksnys norint pagerinti amžiaus rodiklius, svarbiau turėtų būti dieta, nes visi tiriamieji jos laikėsi, nepriklausomai nuo dietos tipo. Beveik visi šios imties tiriamieji pavaizduoti histogramoje yra vyrai, tačiau apskritai visame tyrime didžioji dalis tiriamųjų buvo vyrai, todėl sunku įvertinti ar yra lyties įtaka.
