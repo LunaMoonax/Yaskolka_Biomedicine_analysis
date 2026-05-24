@@ -77,7 +77,7 @@ volcano_df <- data.frame(
   beta = betas_age,
   logp = -log10(pvalues_adj)
 )
-# Suteikiame pavadinimus kategorijomis, kad grafike matytusi
+# Suteikiame pavadinimus kategorijomis, kad grafike matytusi modifikavimo kryptys
 volcano_df$category <- "Nereikšmingas"
 volcano_df$category[pvalues_adj < 0.05 & betas_age > 0] <- "Hipermetilinta"
 volcano_df$category[pvalues_adj < 0.05 & betas_age < 0] <- "Hipometilinta"

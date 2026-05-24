@@ -6,6 +6,7 @@ output:
   pdf_document: 
     latex_engine: xelatex
     fig_crop: false
+    fig_caption: true
 ---
 
 ```{r setup, include=FALSE}
@@ -15,10 +16,14 @@ library(showtext)
 library(knitr)
 ```
 
-```{r linear_model, echo=FALSE, warning=FALSE, message=FALSE}
+## 1. Senėjimo tendencijos
+
+**Metodas**:Nnaudojant limma paketą pritaikytas tiesinės regresijos modelis visoms CpG pozicijoms vienu metu. Modelyje amžius įtrauktas kaip pagrindinis kintamasis, kontroliuojant lytį, dietą, fizinį aktyvumą ir mėginio paėmimo momentą tyrime. Iš modelio ištraukti amžiaus beta koeficientai ir apskaičiuotos p-vertės, koreguotos FDR metodu. Reikšmingos CpG pozicijos (p-adj < 0.05) suskirstytos į hipermetilintus (beta > 0) ir hipometilintus (beta < 0) citozinus. Rezultatai pavaizduoti volcano grafike ir stulpelinėje diagramoje pagal genominį kontekstą (santykį su CpG salomis).
+
+```{r linear_model_1, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Volcano grafikas: metilinimo pokytis per metus (x ašis) ir jo statistinis patikimumas (y ašis). Spalvoti taškai — reikšmingi citozinai (p-adj < 0,05)."}
 showtext::showtext_auto()
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -93,7 +98,7 @@ volcano_df <- data.frame(
   beta = betas_age,
   logp = -log10(pvalues_adj)
 )
-# Suteikiame pavadinimus kategorijomis, kad grafike matytusi
+# Suteikiame pavadinimus kategorijomis, kad grafike matytusi modifikavimo kryptys
 volcano_df$category <- "Nereikšmingas"
 volcano_df$category[pvalues_adj < 0.05 & betas_age > 0] <- "Hipermetilinta"
 volcano_df$category[pvalues_adj < 0.05 & betas_age < 0] <- "Hipometilinta"
@@ -111,7 +116,9 @@ ggplot(volcano_df, aes(x = beta, y = logp, color = category)) +
   ) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+```
 
+```{r linear_model_2, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Su amžiumi susijusių CpG pasiskirstymas pagal genominį kontekstą ir metilinimo kryptį."}
 # Genominio konteksto stulpelinė diagrama su kryptimis
 # Susidarome dataframe reikalingą grafikui atvaizduoti
 sig_context <- data.frame(
@@ -129,6 +136,13 @@ ggplot(sig_context, aes(x = region, fill = direction)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
+
+Iš viso `r sum(significant)` citozinai (`r round(sum(significant)/nrow(data)*100, 2)`% visų) 
+rodo statistiškai reikšmingas su amžiumi susijusias tendencijas (p-adj < 0,05). 
+Iš jų `r sum(betas_age[significant] > 0)` yra hipermetilinti, 
+o `r sum(betas_age[significant] < 0)` — hipometilinti.
+
+Volcano grafike hipometilintų CpG yra gausiau, tačiau patys reikšmingiausi citozinai (aukščiausi taškai grafike) yra hipermetilinti — aukščiausias ≈ 58. Tai reiškia, kad senėjant daugiau citozinų praranda metilinimą, tačiau stipriausi ir patikimiausi senėjimo signalai susiję su metilinimo didėjimu. Genominio konteksto analizė parodė, kad CpG salose (Island) vyrauja hipermetilinimas, o OpenSea srityse dominuoja hipometilinimas. Shore ir Shelf regionuose taip pat vyrauja hipometilinimas, bet palyginus mažesniu skirtumu. Tai gali reikšti, kad reguliacinės sritys senėjant tampa labiau metilintomis, kas gali slopinti genų raišką, o tarpgeninės sritys praranda metilinimą, kas gali destabilizuoti genomo struktūrą.
 
 ## 2. Patikimiausių skirtumų profiliai.
 
@@ -300,7 +314,7 @@ Iš histogramos galima pastebėti, kad yra nemaža dalis citozinų susitelkusi n
 
 **Metodas**: Manhattan grafike kiekvienai CpG pozicijai pavaizduota -log10(p) vertė pagal jos genominę poziciją chromosomose. Naudotos FDR koreguotos p vertės iš tiesinės regresijos modelio. Horizontali raudona linija žymi reikšmingumo slenkstį (p = 0.05). Papildomai nubraižytas atskiras Manhattan grafikas 17 chromosomai, kuri pasižymėjo didžiausiu reikšmingų CpG pozicijų tankiu.
 
-```{r manhattan, echo=FALSE, warning=FALSE, message=FALSE}
+```{r manhattan, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Manhattan grafikas: kiekvienai CpG pozicijai pavaizduota -log10(p-adj) vertė pagal genominę poziciją. Raudona linija — reikšmingumo slenkstis (p = 0,05)."}
 # 5. Manhattan grafikas
 
 # Sudarom duomenų rinkinį manhattann plotui su reikalingais duomenimis
@@ -326,7 +340,7 @@ manhattan(manhattan_df, main = "Manhattan grafikas (visos chromosomos)",
 
 ```
 
-Manhattan grafike matyti, kad reikšmingų CpG pozicijų (virš raudonos linijos, žyminčios p = 0.05) yra daug visose chromosomose. Reikšmingų taškų pasiskirstymas tarp chromosomų yra gana tolygus, be ryškių lokusų. Stipriausias signalas matomas 6 chromosomoje, kur vienas taškas pasiekia -log10(p) > 50. 17 chromosoma išsiskiria didesniu reikšmingų taškų tankiu viršutinėje grafiko dalyje (-log10(p) > 10), todėl ji pasirinkta detalesnei analizei atskirame grafike. Bendrai grafike nematyti vienos dominuojančios genominės srities - reikšmingų pagal tiesinės regresijos modelį citozinų yra per visą genomą.
+Manhattan grafike matyti, kad reikšmingų CpG pozicijų yra daug visose chromosomose. Reikšmingų taškų pasiskirstymas tarp chromosomų yra gana tolygus, be ryškių lokusų. Stipriausias signalas matomas 6 chromosomoje, kur vienas taškas pasiekia -log10(p) > 50. 17 chromosoma išsiskiria didesniu reikšmingų taškų tankiu viršutinėje grafiko dalyje (-log10(p) > 10), todėl ji pasirinkta detalesnei analizei atskirame grafike. Bendrai grafike nematyti vienos dominuojančios genominės srities - reikšmingų pagal tiesinės regresijos modelį citozinų yra per visą genomą.
 
 ```{r manhattan_chrom, echo=FALSE, warning=FALSE, message=FALSE}
 # Kadangi norime atvaizduoti tik vieną chromosomą ir suprantamai, čia pasinaudosime ggplot
