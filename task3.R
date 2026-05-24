@@ -319,7 +319,7 @@ age_data <- age_data[DNAm_CPGs$CpGmarker,]
 rownames(age_data) == DNAm_CPGs$CpGmarker
 length(DNAm_CPGs$CpGmarker)
 
-# Padauginame koeficientus atitinkamo CpG iš jo modifikacijos įverčio ir sudedame į galutinę tiriamojo sumą.
+# Padauginame koeficientus atitinkamo CpG iš jo modifikacijos įverčio ir sudedame į galutinę mėginio sumą.
 epigenetic_age <- colSums(age_data * DNAm_CPGs$CoefficientTraining) + intercept
 
 # Norime pridėti efektus ir tų CpG, kurių nebuvo duomenyse.
@@ -351,7 +351,9 @@ age_df_1 <- data.frame(
   ages = c(age_data$age, epigenetic_age_w_coeff),
   groups = c(rep("real", length(age_data$age)),
             rep("epi", length(epigenetic_age_w_coeff))),
-  cols = colnames(age_data)
+  cols = colnames(age_data),
+  timepoint = age_data$timepoint,
+  donor = age_data$donor
 )
 
 # Realus amžius ir epigentinis amžius be papildomų CpG
@@ -359,7 +361,9 @@ age_df_2 <- data.frame(
   ages = c(age_data$age, epigenetic_age),
   groups = c(rep("real", length(age_data$age)),
              rep("epi", length(epigenetic_age))),
-  cols = colnames(age_data)
+  cols = colnames(age_data),
+  timepoint = age_data$timepoint,
+  donor = age_data$donor
 )
 
 # Dėl tvarkingumo pašalinami mėginių vardai.
@@ -386,3 +390,53 @@ ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
 # Vidutiniai skirtumai tarp epigenetinio amžiaus ir realaus amžiaus.
 mean(epigenetic_age_w_coeff - age_data$age)
 mean(epigenetic_age - age_data$age)
+
+# Apžvalginė analizė
+
+# Žinome, kad chronologinis amžiaus skirtumas prieš ir po analizės yra 1,5 metų,
+# tačiau norime patyrinėti kaip pasikeitė epigenetinis amžius prieš ir po tyrimo.
+
+ggplot(age_df_2[age_df_2$groups == "epi",], aes(x=donor,y=ages, color=factor(timepoint), group=donor)) +
+  labs(title = "Epigenetinio amžiaus amplitudė", x = "Tiriamieji", y = "Amžius", color = "Mėginio paėmimo momentas") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_point(alpha = 0.5) +
+  geom_line(color = "grey70") +
+  theme(axis.text.x = element_blank())
+
+# Iš grafiko matyti, kad kai kurių tiriamųjų epigenetinis amžius tyrimo eigoje sumažėjo.
+# Atsirenkame epigenetinius amžius, apskaičiuojame jų skirtumą tyrimo pradžioje ir pabaigoje,
+# šiuos skirtumus priskiriame tiriamiesiems.
+epi_age_df <- age_df_2[age_df_2$groups == "epi",]
+epi_age_diff <- epi_age_df[epi_age_df$timepoint == 18,]$ages - epi_age_df[epi_age_df$timepoint == 0,]$ages
+unique_donor <- epi_age_df[!duplicated(epi_age_df$donor),]
+unique_donor$age_diff <- epi_age_diff
+
+# Atsirenkame tuos tiriamuosius, kurių epigenetinis amžius sumažėjo tyrimo eigoje.
+donors_neg_diff <- unique_donor[unique_donor$age_diff < 0,]$donor
+length(donors_neg_diff)
+
+# Atvaizduosime epigenetiškai atjaunėjusių tiriamųjų charakteristikas.
+# Kad dėl poruotų mėginių nesidubliuotų stulpelių rezultatai diet, stimulus, pasiliekame tik T0 mėginius
+# (diet ir stimulus tam pačiam tiriamajam  T0 ir T18 nurodomi vienodi)
+age_factors <- colanns(age_data)[colanns(age_data)$timepoint == 0 & colanns(age_data)$donor %in% donors_neg_diff,]
+
+ggplot(age_factors, aes(x=diet)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų dieta", x = "Dietos tipas", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(age_factors, aes(x=stimulus)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų fizinis aktyvumas", x = "Fizinis aktyvumo (ne)buvimas", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(age_factors, aes(x=sex)) +
+  labs(title = "Epigenetiškai atjaunėjusių tiriamųjų lytis", x = "Lytis", y = "Tiriamųjų kiekis") +
+  theme(plot.title = element_text(hjust=0.5, size=12)) +
+  geom_bar(fill = "slateblue") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
