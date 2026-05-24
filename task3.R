@@ -391,6 +391,14 @@ ggplot(age_df_2, aes(x=cols,y=ages,color=groups,group=cols)) +
 mean(epigenetic_age_w_coeff - age_data$age)
 mean(epigenetic_age - age_data$age)
 
+# Standartinės paklaidos tarp epigenetinio amžiaus ir realaus amžiaus skirtumų.
+sd(epigenetic_age_w_coeff - age_data$age) /sqrt(length(epigenetic_age_w_coeff))
+sd(epigenetic_age - age_data$age) /sqrt(length(epigenetic_age))
+
+# Gauname vienodas standartines paklaidas tiek naudojant papildomus CpG, tiek nenaudojant.
+# Tačiau skaičiavimas nenaudojant papildomų CpG atrodo tikslesnis, 
+# kadangi vidutinis amžiaus skirtumas tarp chronologinio ir epigenetinio mažesnis.
+
 # Apžvalginė analizė
 
 # Žinome, kad chronologinis amžiaus skirtumas prieš ir po analizės yra 1,5 metų,
