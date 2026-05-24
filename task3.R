@@ -1,8 +1,8 @@
 # Trečia užduotis
 # Viktorija Ramonaitė, Skaistė Bartkutė
 
-#setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
-setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
+setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
+#setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
 
 library(annmatrix)
 library(ggplot2)
@@ -13,6 +13,9 @@ library(gridExtra)
 library(qqman)
 library(pheatmap)
 library(limma)
+library(methylclock)
+library(tidyr)
+library(knitr)
 
 data <- readRDS("yaskolka.rds")
 
@@ -310,7 +313,7 @@ ggplot(chr17, aes(x = pos_mb, y = logp)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 # 5. Horvath epigenetinis laikrodis
-DNAm <- read.csv("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/13059_2013_3156_MOESM3_ESM.csv", skip = 2)
+DNAm <- read.csv("13059_2013_3156_MOESM3_ESM.csv", skip = 2)
 
 length(DNAm$CpGmarker)
 # Kartu su Intercept yra 353 CpG markeriai epigenetiniam amžiui nustatyti.
@@ -408,6 +411,73 @@ sd(epigenetic_age - age_data$age) /sqrt(length(epigenetic_age))
 # Gauname vienodas standartines paklaidas tiek naudojant papildomus CpG, tiek nenaudojant.
 # Tačiau skaičiavimas nenaudojant papildomų CpG atrodo tikslesnis, 
 # kadangi vidutinis amžiaus skirtumas tarp chronologinio ir epigenetinio mažesnis.
+
+# 6. Kiti epigenetiniai laikrodžiai
+
+# Paruošiame duomenis methylclock formatui
+clock_input <- data.frame(CpG = rownames(data), as.data.frame(as.matrix(data)))
+
+# Skaičiuojame kitus laikrodžius
+clock_results <- DNAmAge(clock_input, clocks = c("Hannum", "Levine", "skinHorvath"))
+
+# Validacija: ar mūsų rankinis Horvath sutampa su bibliotekos
+horvath_validation <- DNAmAge(clock_input, clocks = "Horvath")
+cor(epigenetic_age, horvath_validation$Horvath, use = "complete")
+
+# Validacijos grafikas
+ggplot(data.frame(rankinis = epigenetic_age, biblioteka = horvath_validation$Horvath),
+       aes(x = rankinis, y = biblioteka)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Horvath validacija: rankinis vs methylclock biblioteka",
+    x = "Rankinis skaičiavimas (metai)",
+    y = "methylclock biblioteka (metai)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Sudarome bendrą dataframe su visais laikrodžiais (Horvath — mūsų rankinis)
+clocks_df <- data.frame(
+  real_age = colanns(data)$age,
+  Horvath = epigenetic_age,
+  Hannum = clock_results$Hannum,
+  Levine = clock_results$Levine,
+  skinHorvath = clock_results$skinHorvath,
+  timepoint = factor(colanns(data)$timepoint),
+  donor = colanns(data)$donor,
+  diet = colanns(data)$diet,
+  stimulus = colanns(data)$stimulus,
+  sex = colanns(data)$sex
+)
+
+# Scatter plotai su koreliacija ir MAE kiekviename facete
+clocks_long <- pivot_longer(clocks_df, cols = c(Horvath, Hannum, Levine, skinHorvath),
+                            names_to = "clock", values_to = "epi_age")
+
+clock_stats <- data.frame(
+  clock = c("Horvath", "Hannum", "Levine", "skinHorvath"),
+  label = sapply(c("Horvath", "Hannum", "Levine", "skinHorvath"), function(cl) {
+    sub <- clocks_long[clocks_long$clock == cl, ]
+    paste0("r = ", round(cor(sub$real_age, sub$epi_age, use = "complete"), 3),
+           "\nMAE = ", round(mean(abs(sub$epi_age - sub$real_age), na.rm = TRUE), 2), " m.")
+  })
+)
+
+ggplot(clocks_long, aes(x = real_age, y = epi_age)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(method = "lm", color = "green", se = FALSE) +
+  geom_text(data = clock_stats, aes(x = 30, y = Inf, label = label), 
+            vjust = 2, hjust = 0, size = 3, inherit.aes = FALSE) +
+  facet_wrap(~clock, scales = "free_y") +
+  labs(
+    title = "Chronologinis vs epigenetinis amžius pagal skirtingus laikrodžius",
+    x = "Chronologinis amžius (metai)",
+    y = "Epigenetinis amžius (metai)"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Apžvalginė analizė
 
