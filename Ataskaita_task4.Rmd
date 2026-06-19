@@ -37,6 +37,32 @@ Modeliui įvertinti testavimo metu taikytas LOCO („leave-one-cohort-out") cikl
 
 Po LOCO ciklo apskaičiuota vidutinė absoliuti klaida (MAE) metais siekė 3.22. Klaida apskaičiuota ir kiekvienam rinkiniui atskirai: fraga - 3.42, johansson - 3.15, kalyakulina - 4.10, kurushima - 3.30, mahdi - 3.20, xu - 2.60. Matome, kad MAE nė viename rinkinyje nebuvo itin didelė ir reikšmingai neiškrenta, o tai rodo, kad modelis spėja gana tolygiai. Koreliacija tarp spėto ir realaus amžiaus testavimo metu siekė 0.976, kas rodo labai stiprią sąsają.
 
+Minėtam LOCO ciklui testuoti pasirinkta alpha reikšmė 0.5. Kadangi elastic-net derina ridge (alpha = 0.0) ir lasso (alpha = 1.0) regresijas, optimaliausios alpha reikšmės iš anksto nežinome modelio mokymui. Todėl LOCO ciklams buvo testuojamos alpha reikšmės nuo 0.0 iki 1.0 (inkrementuojant po 0.1), o šių ciklų rezultatai buvo lyginami pagal gautus MAE bei Pearsono koreliacijos koeficientus.
+
+Gauti LOCO ciklų, su skirtingomis alpha reikšmėmis, rezultatai:
+
+| alpha | MAE      | koreliacija |
+|-------|----------|-------------|
+| 0.0   | 3.979830 | 0.9630074   |
+| 0.1   | 3.260759 | 0.9751381   |
+| 0.2   | 3.233772 | 0.9755313   |
+| 0.3   | 3.230032 | 0.9756267   |
+| 0.4   | 3.225269 | 0.9757220   |
+| 0.5   | 3.221066 | 0.9757852   |
+| 0.6   | 3.222216 | 0.9757986   |
+| 0.7   | 3.223162 | 0.9757962   |
+| 0.8   | 3.218841 | 0.9758506   |
+| 0.9   | 3.218243 | 0.9758670   |
+| 1.0   | 3.221888 | 0.9758339   |
+
+Geriausia alpha reikšmė, grąžinusi mažiausią MAE (3.218243) ir didžiausią koreliaciją (0.975867) buvo 0.9. Tai reiškia, kad geriausiai mokymo duomenims tiko modelis, panašiausias į lasso, kai atliekama tiesinė regresija ir nedidelę svarbą turintys koeficientai sumažinami iki 0.
+
+## Galutinio modelio sudarymas
+
+Galutinis modelis sudarytas remiantis visais treniravimo rinkiniais (be quinn), taikant alpha 0.9 ir analogiškai, kaip ankstesniuose žingsniuose, atrenkant 30000 geriausių CpG pozicijų bei logaritmuojant amžių. Pirmiausia pritaikyta 'cv.glmnet' funkcija siekiant rasti geriausią lambda (baudos) parametrą modeliui. Tuomet remiantis geriausiu lambda apmokytas galutinis modelis. Sukurta funkcija, kuri gauto modelio koeficientus pritaiko pateiktam duomenų rinkiniui (šiuo atveju quinn, kurio paruošimui pritaikyti analogiški žingsniai kaip ir treniravimo rinkiniams) ir grąžina prognozuojamą amžių (atstatant atgal į metus). 
+
+Palygintas quinn duomenų rinkinio prognozuotas amžius ir realus amžius. Gautas MAE yra 5.125, o Pearsono koreliacija: 0.947. Modelio tikslumo įverčiai, modelį pritaikant treniravimo metu nenaudotam duomenų rinkiniui, sumažėjo, tačiau modelio tikslumas bendrame amžiaus prognozavimo kontekste išliko geras. Grafikuose pavaizduotas tiriamųjų realus ir prognozuojamas amžius (pastaba: kai kur realus amžius yra 0.0, kadangi quinn duomenų rinkinio tiriamieji - kūdikiai ir vaikai). Dėl didelio tiriamųjų kiekio sudaryti trys grafikai.
+
 ```{r , echo=FALSE, warning=FALSE, message=FALSE}
 #setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
 setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
@@ -131,7 +157,7 @@ cohort  <- full$cohort
 # full nebereikalingas kaip didelė matrica – atlaisvinam atmintį
 rm(full)
 # priverstinai atlaisviname atmintį
-gc()
+invisible(gc())
 
 # Grąžina N CpG indeksų, labiausiai susijusių su amžiumi
 top_cpg <- function(rows, n_keep = 30000) {
@@ -162,7 +188,7 @@ top_cpg <- function(rows, n_keep = 30000) {
 cohort_num <- seq_along(cohort)
 
 # Atsirenkam top CpG remdamiesi visais duomenų rinkiniais.
-idx <- top_cpg(cohort_num, 10000)
+idx <- top_cpg(cohort_num, 30000)
 
 # Ieškom geriausio "lambda".
 fit <- cv.glmnet(full_beta[cohort_num, idx], age_log[cohort_num],
@@ -252,3 +278,5 @@ ggplot(age[101:157,]) +
     plot.title = element_text(hjust = 0.5, size = 16),
     axis.text.x = element_blank())
 ```
+
+Bendra tendencija: prognozuojamas amžius yra 5 metais didesnis negu realus amžius (kaip ir MAE įvertis). Labai jaunas tiriamųjų amžius quinn duomenų rinkinyje taip pat gali būti ir ribinis metilinimo įverčių atvejis dėl ko MAE galėjo padidėti palyginus su modelio treniravimo faze (derinant alpha reikšmes).
