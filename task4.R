@@ -25,7 +25,7 @@ data_train_6 <- readRDS("AgeData/xu.rds")
 # quinn.rds pasiliekame kaip testuojamą duomenų rinkinį.
 data_test <- readRDS("AgeData/quinn.rds")
 
-# Testuojamų rinkinių sąrašas
+# Treniruojamų rinkinių sąrašas
 train_sets <- list(
   fraga       = data_train_1,
   johansson   = data_train_2,

@@ -15,6 +15,28 @@ library(showtext)
 library(knitr)
 ```
 
+# Amžiaus spėjimo modelio kūrimas
+
+## Duomenų paruošimas
+
+Iš visų pateiktų duomenų rinkinių vieną (quinn) pasirenkame kaip galutinį testavimo rinkinį ir jį atidedame. Jis nedalyvauja nei modelio kūrime, nei parametrų derinime, todėl leidžia nešališkai įvertinti galutinio modelio tikslumą visiškai nematytuose duomenyse. Likę šeši rinkiniai (fraga, johansson, kalyakulina, kurushima, mahdi, xu) naudojami treniravimui.
+
+Kadangi atskiri rinkiniai gali būti gauti skirtingomis metilinimo platformomis ar po skirtingo filtravimo, jų CpG pozicijų aibės nesutampa pilnai. Todėl išrenkame tik tas CpG pozicijas, kurios yra bendros visiems treniruojamiems rinkiniams.
+
+Kiekvienam rinkiniui taikoma kokybės kontrolė ir pašalinamos išskirtys. Mėginys laikomas išskirtimi, kai atitinka bent vieną iš šių sąlygų: „inter array correlation" įvertis mažesnis už -3; prastos kokybės signalų procentas mažesnis už 0.95; yra neatitikimas tarp tikros ir nuspėtos lyties; arba yra neatitikimas tarp mėginio ir genetinės informacijos.
+
+Kiekvienam rinkiniui sudaroma beta reikšmių matrica (mėginiai eilutėse, CpG pozicijos stulpeliuose), o atskiri rinkiniai apjungiami į vieną bendrą aibę tolesniems skaičiavimams. Iš jos pašalinami mėginiai, kuriems nenurodytas amžius, kadangi jų negalima naudoti nei modelio mokymui, nei tikslumo vertinimui. Patikrinama, kad beta reikšmių matricoje nelieka trūkstamų reikšmių, nes naudojamas elastic-net metodas jų nepriima. Galiausiai beta reikšmės paverčiamos į matricos formatą efektyvesniam skaičiavimui, o amžius logaritmuojamas. Logaritminė transformacija sumažina didelių amžiaus reikšmių įtaką modeliui, kadangi ryšys tarp metilinimo ir amžiaus nėra tiesiškas. Gavus prognozes, ši transformacija atstatoma atgal į metus.
+
+## Modelio testavimas ir modeliavimas
+
+Ne visos CpG pozicijos yra informatyvios ir dauguma gali būti su amžiumi nesusijusios. Dėl šios priežasties modeliavimui naudojame 30 000 CpG pozicijų, labiausiai susijusių su amžiumi, kur sąsaja įvertinta koreliacija tarp pozicijos beta reikšmių ir amžiaus. Toks požymių atsirinkimas paspartina skaičiavimus ir sumažina triukšmą.
+
+Modelio kūrimui pasirinktas elastic-net metodas (glmnet biblioteka). Šis metodas tinkamas situacijai, kai požymių daugiau nei mėginių: jis taiko reguliarizaciją, kuri stabilizuoja sprendimą, automatiškai atrenka informatyviausias CpG pozicijas ir gerai susidoroja su tarpusavyje koreliuojančiomis pozicijomis. Be to, būtent šiuo metodu sukurti žinomi epigenetiniai laikrodžiai (Horvath, Hannum), todėl pagal literatūrą jis turėtų būti tiksliausias šio tipo duomenims.
+
+Modeliui įvertinti testavimo metu taikytas LOCO („leave-one-cohort-out") ciklas. Vieno ciklo žingsnio metu vienas duomenų rinkinys paliekamas testavimui, o modelis mokomas ant likusių, ir taip paeiliui kiekvienam rinkiniui. Toks vertinimo būdas griežtesnis nei įprasta kryžminė validacija, nes kiekvieno mėginio amžius prognozuojamas modeliu, kuris to mėginio rinkinio apskritai nematė. Taip patikrinama, kaip modelis veiktų ant visiškai naujo rinkinio, o ne tik ant naujų to paties rinkinio mėginių.
+
+Po LOCO ciklo apskaičiuota vidutinė absoliuti klaida (MAE) metais siekė 3.22. Klaida apskaičiuota ir kiekvienam rinkiniui atskirai: fraga - 3.42, johansson - 3.15, kalyakulina - 4.10, kurushima - 3.30, mahdi - 3.20, xu - 2.60. Matome, kad MAE nė viename rinkinyje nebuvo itin didelė ir reikšmingai neiškrenta, o tai rodo, kad modelis spėja gana tolygiai. Koreliacija tarp spėto ir realaus amžiaus testavimo metu siekė 0.976, kas rodo labai stiprią sąsają.
+
 ```{r , echo=FALSE, warning=FALSE, message=FALSE}
 #setwd("C:/Users/Viktorija Ramonaite/Desktop/UNIVERAS/3 KURSAS/BIOMEDICINOS DUOMENU ANALIZE/1 uzduotis/Yaskolka_Biomedicine_analysis")
 setwd("C:/Users/skais/Desktop/Universitetas/Šeštas semestras/Biomedicina/task1/Yaskolka_Biomedicine_analysis")
@@ -40,7 +62,7 @@ data_train_6 <- readRDS("AgeData/xu.rds")
 # quinn.rds pasiliekame kaip testuojamą duomenų rinkinį.
 data_test <- readRDS("AgeData/quinn.rds")
 
-# Testuojamų rinkinių sąrašas
+# Treniruojamų rinkinių sąrašas
 train_sets <- list(
   fraga       = data_train_1,
   johansson   = data_train_2,
@@ -50,7 +72,7 @@ train_sets <- list(
   xu          = data_train_6
 )
 
-lapply(train_sets, function(x) colnames(colanns(x)))
+#lapply(train_sets, function(x) colnames(colanns(x)))
 
 # Surenkame tik bendrus CpG visiems duomenų rinkiniams
 common_cpg <- Reduce(intersect, lapply(train_sets, rownames))
@@ -112,27 +134,27 @@ rm(full)
 gc()
 
 # Grąžina N CpG indeksų, labiausiai susijusių su amžiumi
-top_cpg <- function(rows, n_keep = 10000) {
+top_cpg <- function(rows, n_keep = 30000) {
   cors <- as.vector(cor(age_log[rows], full_beta[rows, ]))
   cors[is.na(cors)] <- 0
   order(abs(cors), decreasing = TRUE)[seq_len(n_keep)]
 }
 
 # alpha      mae     corrs
-# 1    0.0 4.059213 0.9619025
-# 2    0.1 3.533190 0.9709141
-# 3    0.2 3.514222 0.9712781
-# 4    0.3 3.505293 0.9714638
-# 5    0.4 3.504516 0.9715078
-# 6    0.5 3.505156 0.9714920
-# 7    0.6 3.505789 0.9714905
-# 8    0.7 3.507992 0.9714620
-# 9    0.8 3.502974 0.9715427
-# 10   0.9 3.504274 0.9715227
-# 11   1.0 3.506883 0.9714905
+# 1    0.0 3.979830 0.9630074
+# 2    0.1 3.260759 0.9751381
+# 3    0.2 3.233772 0.9755313
+# 4    0.3 3.230032 0.9756267
+# 5    0.4 3.225269 0.9757220
+# 6    0.5 3.221066 0.9757852
+# 7    0.6 3.222216 0.9757986
+# 8    0.7 3.223162 0.9757962
+# 9    0.8 3.218841 0.9758506
+# 10   0.9 3.218243 0.9758670
+# 11   1.0 3.221888 0.9758339
 
 # alpha      mae     corrs
-# 9   0.8 3.502974 0.9715427
+# 9   0.9 3.218243 0.975867
 
 # Sudarome pilną modelį
 
@@ -144,10 +166,10 @@ idx <- top_cpg(cohort_num, 10000)
 
 # Ieškom geriausio "lambda".
 fit <- cv.glmnet(full_beta[cohort_num, idx], age_log[cohort_num],
-                 alpha = 0.8)
+                 alpha = 0.9)
 
 # Sudarome galutinį modelį:
-best_fit <- glmnet(full_beta[cohort_num, idx], age_log[cohort_num], alpha = 0.8, lambda = fit$lambda.min)
+best_fit <- glmnet(full_beta[cohort_num, idx], age_log[cohort_num], alpha = 0.9, lambda = fit$lambda.min)
 
 # Kuriame funkciją, kuri paruoštų duomenis modelio pritaikymui ir pritaikytų modelį duomenims.
 predict_age <- function(data_test, idx, best_fit) {
@@ -180,11 +202,11 @@ age <- predict_age(data_test, idx, best_fit)
 
 # Apskaičiuojame MAE
 # mean(abs(age$pred - age$real))
-# Gauname 5.352225
+# Gauname 5.124696
 
 # Apskaičiuojame koreliaciją
 # cat("Pearson r:", round(cor(age$real, age$pred), 3), "\n")
-# Gauname 0.939
+# Gauname 0.947
 
 # Pavaizduosime realų vs. prognozuotą amžių
 
